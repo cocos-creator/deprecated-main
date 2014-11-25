@@ -130,13 +130,13 @@ function initFireApp () {
     // load Fire core module
     if ( _options.dev ) {
         global.Fire = require('./src/core/core.dev');
-        global.Fire = Fire.merge( global.Fire,
+        global.Fire = Fire.mixin( global.Fire,
                                   require('./src/editor-share/editor-share.dev')
                                   );
     }
     else {
         global.Fire = require('./src/core/core.min');
-        global.Fire = Fire.merge( global.Fire,
+        global.Fire = Fire.mixin( global.Fire,
                                   require('./src/editor-share/editor-share.min')
                                   );
     }
