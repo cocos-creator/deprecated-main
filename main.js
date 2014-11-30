@@ -39,6 +39,7 @@ function parseArgv( argv ) {
     .option('showDevtools', { abbr: 'D', full: 'show-devtools', flag: true, help: 'Open devtools automatically when main window loaded.' })
     .option('debug', { full: 'debug', flag: true, help: 'Open in browser context debug mode.' })
     .option('debugBreak', { full: 'debug-brk', flag: true, help: 'Open in browser context debug mode, and break at first.' })
+    .option('disableDirectWrite', { full: 'disable-direct-write', flag: true, help: 'Disables the DirectWrite font rendering system on windows.' })
     ;
 
     var opts = Nomnom.parse(argv);
@@ -195,6 +196,10 @@ function start() {
             });
         }
     });
+
+    if ( _options.disableDirectWrite ) {
+        App.commandLine.appendSwitch('disable-direct-write');
+    }
 
     //
     App.on('ready', function() {
