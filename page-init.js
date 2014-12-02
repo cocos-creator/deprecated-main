@@ -1,11 +1,8 @@
 ﻿//
 try {
-    Pace.once( 'hide', function () {
-        var launchPage = document.getElementById('launch-page');
-        launchPage.remove();
-    });
-
     // init document events
+
+    // prevent default drag
     document.addEventListener( "dragstart", function (event) {
         event.preventDefault(); 
     } );
@@ -15,9 +12,20 @@ try {
     document.addEventListener( "dragover", function (event) {
         event.preventDefault(); 
     } );
+
+    // prevent contextmenu
     document.addEventListener( "contextmenu", function (event) {
         event.preventDefault();
         event.stopPropagation();
+    } );
+
+    // prevent go back
+    document.addEventListener( "keydown", function (event) {
+        // back
+        if ( event.keyCode === 8 ) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
     } );
 
     window.onload = function () {

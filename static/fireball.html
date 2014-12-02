@@ -4,8 +4,14 @@
 
         <script src="fire://ext/pace/pace.min.js"></script>
         <link href="fire://static/pace.css" rel="stylesheet"></style>
+        <script>
+            Pace.once( 'hide', function () {
+                var launchPage = document.getElementById('launch-page');
+                launchPage.remove();
+            });
+        </script>
 
-        <script type="text/javascript" src="fire://launch.js"></script>
+        <script type="text/javascript" src="fire://page-init.js"></script>
         <link rel="stylesheet" href="fire://launch.css">                   
     </head>
 

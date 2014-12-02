@@ -10,8 +10,8 @@ var paths = {
     main: [
         'main.js'
     ],
-    launch_js: [
-        'launch.js',
+    page_init_js: [
+        'page-init.js',
     ],
     launch_css: [
         'launch.styl'
@@ -62,7 +62,7 @@ var task_js = function ( name ) {
 };
 
 task_js('main');
-task_js('launch_js');
+task_js('page_init_js');
 
 // launch-css-dev
 gulp.task( 'launch_css-dev', function() {
@@ -119,18 +119,18 @@ gulp.task('tools-min', ['tools-dev'], function() {
 // watch
 gulp.task('watch', function() {
     gulp.watch(paths.main, ['main-dev']).on( 'error', gutil.log );
-    gulp.watch(paths.launch_js, ['launch_js-dev']).on( 'error', gutil.log );
+    gulp.watch(paths.page_init_js, ['page_init_js-dev']).on( 'error', gutil.log );
     gulp.watch(paths.launch_css, ['launch_css-dev']).on( 'error', gutil.log );
     gulp.watch(paths.static, ['static-dev']).on( 'error', gutil.log );
     gulp.watch(paths.tools, ['tools-dev']).on( 'error', gutil.log );
 });
 gulp.task('watch-self', function() {
     gulp.watch(paths.main, ['main-dev']).on( 'error', gutil.log );
-    gulp.watch(paths.launch_js, ['launch_js-dev']).on( 'error', gutil.log );
+    gulp.watch(paths.page_init_js, ['page_init_js-dev']).on( 'error', gutil.log );
     gulp.watch(paths.launch_css, ['launch_css-dev']).on( 'error', gutil.log );
     gulp.watch(paths.static, ['static-dev']).on( 'error', gutil.log );
     gulp.watch(paths.tools, ['tools-dev']).on( 'error', gutil.log );
 });
 
-gulp.task('dev', ['main-dev', 'launch_js-dev', 'launch_css-dev', 'static-dev', 'tools-dev'] );
-gulp.task('default', ['main-min', 'launch_js-min', 'launch_css-min', 'static-min', 'tools-min'] );
+gulp.task('dev', ['main-dev', 'page_init_js-dev', 'launch_css-dev', 'static-dev', 'tools-dev'] );
+gulp.task('default', ['main-min', 'page_init_js-min', 'launch_css-min', 'static-min', 'tools-min'] );
