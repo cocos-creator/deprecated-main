@@ -1,10 +1,11 @@
 {
-    "name": "fireball-main",
+    "name": "Fireball-x",
     "version": "0.0.9",
-    "description": "Fireball Main",
+    "description": "Fireball-x Application",
     "homepage": "http://fireball-x.github.io",
     "license": "MIT",
     "licenseUrl": "http://opensource.org/licenses/MIT",
+    "main": "main.js",
     "dependencies": {
         "del": "",
         "gulp": "",
@@ -12,11 +13,5 @@
         "vinyl-source-stream": "",    
         "through": "",
         "browserify": ""
-    },
-    "devDependencies": {
-        "jshint-stylish": "",
-        "gulp-jshint": "",
-        "gulp-stylus": "",
-        "gulp-uglify": ""
     }
 }
