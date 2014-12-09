@@ -12,6 +12,7 @@ var Chalk = require('chalk');
 global.FIRE_VER = "v0.0.8";
 global.FIRE_PATH = __dirname;
 global.FIRE_DATA_PATH = App.getDataPath();
+global.FIRE_PROJECT_PATH = "";  // will be init in Fireball.open
 global.Fire = {};
 
 var _options = {};
