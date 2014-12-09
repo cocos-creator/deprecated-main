@@ -2,137 +2,93 @@
 
 var gulp = require('gulp');
 var gutil = require('gulp-util');
-var del = require('del');
+//var del = require('del');
 
-var through = require('through');
+//var through = require('through');
+
+var ToolsRunner = require('./tools-runner');
+
+var BuildPrefix = 'build-';
 
 
-(function main() {
-    gulp.task('default', function () {
-        console.log('OhYeah');
-    });
-    return;
+/////////////////////////////////////////////////////////////////////////////
+// parse args
+/////////////////////////////////////////////////////////////////////////////
 
-    /////////////////////////////////////////////////////////////////////////////
-    // options
-    /////////////////////////////////////////////////////////////////////////////
+var proj = gutil.env.project;
+if (!proj || typeof proj !== 'string') {
+    console.error('Use "--project OOXX" to specify the project to build');
+    process.exit(1);
+}
 
-    var proj = gutil.env.project;
-    var debug = !!gutil.env.debug;
+var platform = gutil.env.platform;
+if (!platform || typeof platform !== 'string') {
+    console.error('Use "--platform OOXX" to specify the target platform to build');
+    process.exit(1);
+}
 
-    if (!proj) {
-        console.error('Use --project to specify the project to build');
-        return;
+var debug = gutil.env.debug;
+
+/////////////////////////////////////////////////////////////////////////////
+// configs
+/////////////////////////////////////////////////////////////////////////////
+
+var paths = {
+    src: Path.join(proj, 'assets/**/*.js'),
+    srcbase: undefined,
+    //tmpdir: Path.join(require('os').tmpdir(), 'fireball'),
+    tmpdir: Path.join(proj, 'temp'),
+    dest: Path.join(proj, 'library/bundle.js'),
+};
+
+/////////////////////////////////////////////////////////////////////////////
+// tasks
+/////////////////////////////////////////////////////////////////////////////
+
+gulp.task('compile', function (done) {
+    var args = [
+        '--project', proj,
+        '--build',
+    ];
+    if (debug) {
+        args.push('--debug');
     }
     
-    var paths = {
-        src: Path.join(proj, 'assets/**/*.js'),
-        srcbase: undefined,
-        //tmpdir: Path.join(require('os').tmpdir(), 'fireball'),
-        tmpdir: Path.join(proj, 'temp'),
-        dest: Path.join(proj, 'library/bundle.js'),
-    };
-
-    /////////////////////////////////////////////////////////////////////////////
-    // tasks
-    /////////////////////////////////////////////////////////////////////////////
-
-    var tempScriptDir = paths.tmpdir + '/scripts';
-
-    // clean
-    gulp.task('clean', function() {
-        del(paths.dest);
-        del(tempScriptDir, { force: true });
+    // run!
+    ToolsRunner.gulp('tools/gulp-compile.js', args, function (succeeded) {
+        if (succeeded) {
+            done();
+        }
+        else {
+            console.error('Failed to build');
+            process.exit(1);
+        }
     });
-
-    var precompiledPaths = null;
-
-    /**
-     * pre-compile
-     * 以单文件为单位，将文件进行预编译，将编译后的文件存放到 tempScriptDir，将文件列表放到 precompiledPaths
-     */
-    gulp.task('pre-compile', function (done) {
-        // clear
-        var patternToDel = tempScriptDir + '/**/*'; // IMPORTANT
-        //del.sync(patternToDel, { force: true });
-        del(patternToDel, { force: true }, function (err) {
-            if (err) {
-                done(err);
-                return;
-            }
-            // copy
-        //setTimeout(function saveDeleted() {
-            precompiledPaths = [];
-            gulp.src(paths.src, { base: paths.srcbase })
-                .pipe(gulp.dest(tempScriptDir))
-                .pipe(through(function write(file) {
-                    // TODO: 检查 utf-8 bom 文件头否则会不支持require中文路径
-                    var encodingValid = true;
-                    if (!encodingValid) {
-                        this.emit('error', new gutil.PluginError('precompile', 'Sorry, encoding must be utf-8 (BOM): ' + file.relative, { showStack: false }));
-                        return;
-                    }
-                    precompiledPaths.push(file.relative);
-                }))
-                .on('end', done);
-        //}, 1000);
-        });
-    });
+});
     
-    // browserify
-    gulp.task('browserify', ['pre-compile'], function() {
-        function getMain() {
-            // The main script just require all scripts to make them all loaded by engine.
-            var content = "";
-            for (var i = 0; i < precompiledPaths.length; ++i) {
-                var file = precompiledPaths[i];         // eg: xxx\sss.js
-                //var cmd = file.substring(0, file.length - Path.extname(file).length);  // eg: xxx\sss
-                //cmd = cmd.replace(/\\/g, '/');          // eg: xxx/sss
-                //cmd = "require('./" + cmd + "');\n";    // eg: require('./xxx/sss');
-                var cmd = Path.basename(file, Path.extname(file));
-                cmd = "require('" + cmd + "');\n";      // eg: require('sss');
-                content += cmd;
-            }
-            //precompiledPaths = null;
-            if (content.length === 0) {
-                content = '/* no script */';
-            }
-            return content;
+gulp.task(BuildPrefix + 'web-desktop', ['compile'], function () {
+
+});
+
+// default
+gulp.task('default', ['build']);
+
+/////////////////////////////////////////////////////////////////////////////
+// check platform
+/////////////////////////////////////////////////////////////////////////////
+
+var buildTask = BuildPrefix + platform;
+if (buildTask in gulp.tasks) {
+    // redirect your platform
+    gulp.task('build', [buildTask]);
+}
+else {
+    var availables = [];
+    for (var key in gulp.tasks) {
+        if (key.indexOf(BuildPrefix) === 0) {
+            availables.push(key.substring(BuildPrefix.length));
         }
-        function toStream( content ) {
-            var s = new Readable();
-            s._read = function () {
-                this.push(content);
-                this.push(null);
-            }
-            return s;
-        }
-
-        var main = getMain();
-        //console.log(main);
-        var opts = {
-            debug: debug,
-            basedir: tempScriptDir,
-        };
-        var stream = toStream(main);
-
-        // https://github.com/substack/node-browserify#methods
-        var b = browserify(stream, opts);
-        for (var i = 0; i < precompiledPaths.length; ++i) {
-            var file = precompiledPaths[i];
-            // expose the filename so as to avoid specifying relative path in require()
-            opts.expose = Path.basename(file, Path.extname(file));
-            b.require('./' + file, opts);
-        }
-        var bundle = b.bundle();
-        return bundle.on('error', console.error.bind(console, gutil.colors.red('Browserify Error')))
-            .pipe(source(Path.basename(paths.dest)))
-            //.pipe(bufferify())
-            .pipe(gulp.dest(Path.dirname(paths.dest)))
-            ;
-    });
-
-    // default
-    gulp.task('default', ['browserify']);
-
-})();
+    }
+    console.error('Not support %s platform, available platform currently: %s', platform, availables);
+    process.exit(1);
+}
