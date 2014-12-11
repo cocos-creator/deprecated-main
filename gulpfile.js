@@ -1,4 +1,8 @@
+﻿var Path = require('path');
+
 var gulp = require('gulp');
+var concat = require('gulp-concat');
+var rename = require('gulp-rename');
 var gutil = require('gulp-util');
 var jshint = require('gulp-jshint');
 var stylish = require('jshint-stylish');
@@ -22,6 +26,19 @@ var paths = {
     static: [ 
         'static/**/*',
     ],
+    build_publish: {
+        src_min: ['../core/bin/core.min.js', '../engine/bin/engine.min.js'],
+        src_dev: ['../core/bin/core.dev.js', '../engine/bin/engine.dev.js'],
+
+        dest_dev: [
+            'web-desktop/template-dev/firaball-x.dev.js',
+            'web-mobile/template-dev/firaball-x.dev.js',
+        ],
+        dest_min: [
+            'web-desktop/template/firaball-x.js',
+            'web-mobile/template/firaball-x.js',
+        ],
+    },
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -84,15 +101,48 @@ gulp.task( 'launch_css-min', ['launch_css-dev'], function() {
     .pipe(gulp.dest('bin/min/'));
 });
 
+/**
+ * @param {string} templateVersion - dev or min
+ * @param {string} editorVersion - dev or min
+ */
+function task_build_publish_js(templateVersion, editorVersion) {
+    var src = paths.build_publish['src_' + templateVersion];
+    var taskname = 'build-publish-js-' + templateVersion + '_' + editorVersion;
+    // register task
+    gulp.task(taskname, function () {
+        var stream = gulp.src(src)
+                         .pipe(concat('blabla.js'));
+        for (var i = 0, dests = paths.build_publish['dest_' + templateVersion]; i < dests.length; i++) {
+            var dest = 'bin/' + editorVersion + '/static/platforms/' + dests[i];
+            stream = stream.pipe(rename(Path.basename(dest)))
+                           .pipe(gulp.dest(Path.dirname(dest)));
+        }
+        //stream.on('end', done);
+        return stream;
+    })
+    // register watch
+    if (editorVersion === 'dev') {
+        gulp.tasks[taskname].watch = function () {
+            gulp.watch(src, [taskname]).on('error', gutil.log);
+        };
+    }
+    //
+    return taskname;
+}
+
+// build publish
+gulp.task('build-publish-dev', [task_build_publish_js('dev', 'dev'), task_build_publish_js('min', 'dev')]);
+gulp.task('build-publish-min', [task_build_publish_js('dev', 'min'), task_build_publish_js('min', 'min')]);
+
 // static-dev
-gulp.task('static-dev', function() {
+gulp.task('static-dev', ['build-publish-dev'], function() {
     return gulp.src(paths.static)
     .pipe(gulp.dest('bin/dev/static'))
     ;
 });
 
 // static-min
-gulp.task('static-min', ['static-dev'], function() {
+gulp.task('static-min', ['build-publish-min', 'static-dev'], function() {
     return gulp.src(paths.static)
     .pipe(gulp.dest('bin/min/static'))
     ;
@@ -123,14 +173,15 @@ gulp.task('watch', function() {
     gulp.watch(paths.launch_css, ['launch_css-dev']).on( 'error', gutil.log );
     gulp.watch(paths.static, ['static-dev']).on( 'error', gutil.log );
     gulp.watch(paths.tools, ['tools-dev']).on( 'error', gutil.log );
-});
-gulp.task('watch-self', function() {
-    gulp.watch(paths.main, ['main-dev']).on( 'error', gutil.log );
-    gulp.watch(paths.page_init_js, ['page_init_js-dev']).on( 'error', gutil.log );
-    gulp.watch(paths.launch_css, ['launch_css-dev']).on( 'error', gutil.log );
-    gulp.watch(paths.static, ['static-dev']).on( 'error', gutil.log );
-    gulp.watch(paths.tools, ['tools-dev']).on( 'error', gutil.log );
-});
 
-gulp.task('dev', ['main-dev', 'page_init_js-dev', 'launch_css-dev', 'static-dev', 'tools-dev'] );
-gulp.task('default', ['main-min', 'page_init_js-min', 'launch_css-min', 'static-min', 'tools-min'] );
+    for (var task in gulp.tasks) {
+        var watch = gulp.tasks[task].watch;
+        if (watch) {
+            watch();
+        }
+    }
+});
+gulp.task('watch-self', ['watch']);
+
+gulp.task('dev', ['main-dev', 'page_init_js-dev', 'launch_css-dev', 'static-dev', 'tools-dev', 'build-publish-dev'] );
+gulp.task('default', ['main-min', 'page_init_js-min', 'launch_css-min', 'static-min', 'tools-min', 'build-publish-min'] );

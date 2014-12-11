@@ -13,5 +13,9 @@
         "vinyl-source-stream": "",    
         "through": "",
         "browserify": ""
+    },
+    "devDependencies": {
+        "gulp-concat": "",
+        "gulp-rename": ""
     }
 }
