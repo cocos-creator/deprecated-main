@@ -23,12 +23,16 @@ var paths = {
     tools: [
         'tools/**/*',
     ],
-    static: [ 
+    static: [
         'static/**/*',
+        '!static/platforms/shares/',
+        '!static/platforms/shares/**/*'
     ],
     build_publish: {
         src_min: ['../core/bin/core.min.js', '../engine/bin/engine.min.js'],
         src_dev: ['../core/bin/core.dev.js', '../engine/bin/engine.dev.js'],
+
+        shares: ['static/platforms/shares/**/*'],
 
         dest_dev: [
             'web-desktop/template-dev/firaball-x.dev.js',
@@ -130,9 +134,44 @@ function task_build_publish_js(templateVersion, editorVersion) {
     return taskname;
 }
 
+function task_copy_shares(editorVersion) {
+    var src = paths.build_publish.shares;
+    var taskname = 'copy-shares-' + editorVersion;
+    // register task
+    gulp.task(taskname, function () {
+        var stream = gulp.src(src);
+        var i, dest;
+        for (i = 0, dests = paths.build_publish.dest_dev; i < dests.length; i++) {
+            dest = 'bin/' + editorVersion + '/static/platforms/' + dests[i];
+            stream = stream.pipe(gulp.dest(Path.dirname(dest)));
+        }
+        for (i = 0, dests = paths.build_publish.dest_min; i < dests.length; i++) {
+            dest = 'bin/' + editorVersion + '/static/platforms/' + dests[i];
+            stream = stream.pipe(gulp.dest(Path.dirname(dest)));
+        }
+        return stream;
+    })
+    // register watch
+    if (editorVersion === 'dev') {
+        gulp.tasks[taskname].watch = function () {
+            gulp.watch(src, [taskname]).on('error', gutil.log);
+        };
+    }
+    //
+    return taskname;
+}
+
 // build publish
-gulp.task('build-publish-dev', [task_build_publish_js('dev', 'dev'), task_build_publish_js('min', 'dev')]);
-gulp.task('build-publish-min', [task_build_publish_js('dev', 'min'), task_build_publish_js('min', 'min')]);
+gulp.task('build-publish-dev', [
+    task_build_publish_js('dev', 'dev'),
+    task_build_publish_js('min', 'dev'),
+    task_copy_shares('dev'),
+]);
+gulp.task('build-publish-min', [
+    task_build_publish_js('dev', 'min'),
+    task_build_publish_js('min', 'min'),
+    task_copy_shares('min'),
+]);
 
 // static-dev
 gulp.task('static-dev', ['build-publish-dev'], function() {

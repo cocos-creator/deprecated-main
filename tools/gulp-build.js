@@ -1,5 +1,5 @@
 ﻿var Path = require('path');
-//var fs = require('fs');
+var fs = require('fs');
 
 var gulp = require('gulp');
 var gutil = require('gulp-util');
@@ -10,7 +10,8 @@ var Nomnom = require('nomnom');
 
 var ToolsRunner = require('./tools-runner');
 
-var BUILD_ = 'build-';
+// 有且只有平台所属的 task 以 build-platform_ 开头
+var BUILD_ = 'build-platform_';
 
 /////////////////////////////////////////////////////////////////////////////
 // parse args
@@ -37,6 +38,10 @@ Nomnom.option('debug', {
     help: 'development build',
     flag: true,
 });
+// 这是一个临时参数，之后会从 project settings 读取
+Nomnom.option('scene', {
+    string: '--launch-scene=UUID',
+});
 
 var opts = Nomnom.parse();
 var proj = opts.project;
@@ -54,14 +59,16 @@ console.log('Destination ' + dest);
 // configs
 /////////////////////////////////////////////////////////////////////////////
 
-var base = './static/platforms/';
+var tmpl_base = './static/platforms/';
 var paths = {
-    template_web_desktop: base + (debug ? 'web-desktop/template-dev/**/*' : 'web-desktop/template/**/*'),
-    template_web_mobile: base + (debug ? 'web-mobile/template-dev/**/*' : 'web-mobile/template/**/*'),
+    template_web_desktop: tmpl_base + (debug ? 'web-desktop/template-dev/**/*' : 'web-desktop/template/**/*'),
+    template_web_mobile: tmpl_base + (debug ? 'web-mobile/template-dev/**/*' : 'web-mobile/template/**/*'),
     script: debug ? 'project.dev.js' : 'project.js',
     deps: [
         debug ? 'ext/pixi/bin/pixi.dev.js' : 'ext/pixi/bin/pixi.js',
     ],
+    res: Path.join(dest, 'resource'),
+    settings: Path.join(dest, 'settings.json'),
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -98,6 +105,24 @@ gulp.task('compile', function (done) {
     });
 });
 
+// build resources
+gulp.task('build-resources', function () {
+    return gulp.src(Path.join(proj, 'library/**/*'), { base: proj })
+        .pipe(gulp.dest(paths.res));
+});
+
+// build project settings
+gulp.task('build-settings', [
+    'copy-deps',    // wait until dest folder created
+],
+function (done) {
+    var settings = {
+        scenes: [opts.scene],
+    }
+    fs.writeFile(paths.settings, JSON.stringify(settings), done);
+});
+
+// build html
 function buildAndCopyWeb(src, callback) {
     return gulp.src(src)
         .pipe(through(function write(file) {
@@ -118,7 +143,12 @@ function buildAndCopyWeb(src, callback) {
 }
 
 // web-desktop
-gulp.task(BUILD_ + 'web-desktop', ['compile', 'copy-deps'], function (done) {
+gulp.task(BUILD_ + 'web-desktop',[
+    'compile',
+    'copy-deps',
+    'build-resources',
+    'build-settings'
+], function (done) {
     buildAndCopyWeb(paths.template_web_desktop, done);
     //var path = Path.join(dest, Path.basename(paths.web_template_desktop));
     //new gutil.File({
