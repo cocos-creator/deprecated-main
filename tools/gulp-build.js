@@ -1,54 +1,86 @@
 ﻿var Path = require('path');
+//var fs = require('fs');
 
 var gulp = require('gulp');
 var gutil = require('gulp-util');
 //var del = require('del');
+var through = require('through');
 
-//var through = require('through');
+var Nomnom = require('nomnom');
 
 var ToolsRunner = require('./tools-runner');
 
-var BuildPrefix = 'build-';
-
+var BUILD_ = 'build-';
 
 /////////////////////////////////////////////////////////////////////////////
 // parse args
 /////////////////////////////////////////////////////////////////////////////
 
-var proj = gutil.env.project;
-if (!proj || typeof proj !== 'string') {
-    console.error('Use "--project OOXX" to specify the project to build');
-    process.exit(1);
-}
+Nomnom.script('gulp --gulpfile gulp-build.js');
+Nomnom.option('project', {
+    string: '-p PROJECT, --project=PROJECT',
+    help: 'the project to build',
+    required: true,
+});
+Nomnom.option('platform', {
+    string: '--platform=PLATFORM',
+    help: 'the target platform to build',
+    required: true,
+});
+Nomnom.option('dest', {
+    string: '--dest=DEST',
+    help: 'the path for the output files',
+    required: true,
+});
+Nomnom.option('debug', {
+    string: '-d, --debug',
+    help: 'development build',
+    flag: true,
+});
 
-var platform = gutil.env.platform;
-if (!platform || typeof platform !== 'string') {
-    console.error('Use "--platform OOXX" to specify the target platform to build');
-    process.exit(1);
-}
+var opts = Nomnom.parse();
+var proj = opts.project;
+var platform = opts.platform;
+var dest = opts.dest;
+var debug = opts.debug;
 
-var debug = gutil.env.debug;
+proj = Path.resolve(proj);
+console.log('Building ' + proj);
+
+dest = Path.resolve(dest);
+console.log('Destination ' + dest);
 
 /////////////////////////////////////////////////////////////////////////////
 // configs
 /////////////////////////////////////////////////////////////////////////////
 
+var base = './static/platforms/';
 var paths = {
-    src: Path.join(proj, 'assets/**/*.js'),
-    srcbase: undefined,
-    //tmpdir: Path.join(require('os').tmpdir(), 'fireball'),
-    tmpdir: Path.join(proj, 'temp'),
-    dest: Path.join(proj, 'library/bundle.js'),
+    template_web_desktop: base + (debug ? 'web-desktop/template-dev/**/*' : 'web-desktop/template/**/*'),
+    template_web_mobile: base + (debug ? 'web-mobile/template-dev/**/*' : 'web-mobile/template/**/*'),
+    script: debug ? 'project.dev.js' : 'project.js',
+    deps: [
+        debug ? 'ext/pixi/bin/pixi.dev.js' : 'ext/pixi/bin/pixi.js',
+    ],
 };
 
 /////////////////////////////////////////////////////////////////////////////
 // tasks
 /////////////////////////////////////////////////////////////////////////////
 
+// copy-deps
+gulp.task('copy-deps', function () {
+    return gulp.src(paths.deps)
+        .pipe(gulp.dest(dest));
+});
+
+// compile for current platform
 gulp.task('compile', function (done) {
+    var script = Path.join(dest, paths.script);
     var args = [
-        '--project', proj,
-        '--build',
+        '--project=' + proj,
+        '--platform=' + platform,
+        '--dest=' + script,
     ];
     if (debug) {
         args.push('--debug');
@@ -65,9 +97,35 @@ gulp.task('compile', function (done) {
         }
     });
 });
-    
-gulp.task(BuildPrefix + 'web-desktop', ['compile'], function () {
 
+function buildAndCopyWeb(src, callback) {
+    return gulp.src(src)
+        .pipe(through(function write(file) {
+            if (Path.extname(file.path) === '.html') {
+                console.log('generating html from ' + file.path);
+                var data = {
+                    file: file,
+                    project: Path.basename(proj),
+                    width: 800,
+                    height: 600,
+                };
+                file.contents = new Buffer(gutil.template(file.contents, data))
+            }
+            this.emit('data', file);
+        }))
+        .pipe(gulp.dest(dest))
+        .on('end', callback);
+}
+
+// web-desktop
+gulp.task(BUILD_ + 'web-desktop', ['compile', 'copy-deps'], function (done) {
+    buildAndCopyWeb(paths.template_web_desktop, done);
+    //var path = Path.join(dest, Path.basename(paths.web_template_desktop));
+    //new gutil.File({
+    //    contents: _generateRunnerContents(template, lib_dev.concat(fileList), dest, title),
+    //    base: file.base,
+    //    path: Path.join(file.base, filename)
+    //})
 });
 
 // default
@@ -77,7 +135,7 @@ gulp.task('default', ['build']);
 // check platform
 /////////////////////////////////////////////////////////////////////////////
 
-var buildTask = BuildPrefix + platform;
+var buildTask = BUILD_ + platform;
 if (buildTask in gulp.tasks) {
     // redirect your platform
     gulp.task('build', [buildTask]);
@@ -85,8 +143,8 @@ if (buildTask in gulp.tasks) {
 else {
     var availables = [];
     for (var key in gulp.tasks) {
-        if (key.indexOf(BuildPrefix) === 0) {
-            availables.push(key.substring(BuildPrefix.length));
+        if (key.indexOf(BUILD_) === 0) {
+            availables.push(key.substring(BUILD_.length));
         }
     }
     console.error('Not support %s platform, available platform currently: %s', platform, availables);

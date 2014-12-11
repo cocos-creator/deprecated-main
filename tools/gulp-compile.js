@@ -8,6 +8,9 @@ var del = require('del');
 var through = require('through');
 var browserify = require('browserify');
 var source = require('vinyl-source-stream');
+
+var Nomnom = require('nomnom');
+
 //var bufferify = require('vinyl-buffer');
 
 //var rename = require('gulp-rename');
@@ -22,17 +25,35 @@ var source = require('vinyl-source-stream');
 // parse args
 /////////////////////////////////////////////////////////////////////////////
 
-var proj = gutil.env.project;
-if (!proj || typeof proj !== 'string') {
-    console.error('Use "--project OOXX" to specify the project to compile');
-    process.exit(1);
-}
+Nomnom.script('gulp --gulpfile gulp-compile.js');
+Nomnom.option('project', {
+    string: '-p PROJECT, --project=PROJECT',
+    help: 'the project to compile',
+    required: true,
+});
+Nomnom.option('platform', {
+    string: '--platform=PLATFORM',
+    help: 'the target platform to compile',
+    'default': 'editor',
+});
+Nomnom.option('dest', {
+    string: '--dest=DEST',
+    help: 'the path for the output files',
+    'default': 'library/bundle.js',
+});
+Nomnom.option('debug', {
+    string: '-d, --debug',
+    help: 'script debugging',
+    flag: true,
+});
+
+var opts = Nomnom.parse();
+var proj = opts.project;
+var debug = opts.debug;
+var platform = opts.platform;
 
 proj = Path.resolve(proj);
-
 console.log('Compiling ' + proj);
-
-var debug = gutil.env.debug;
 
 /////////////////////////////////////////////////////////////////////////////
 // configs
@@ -43,8 +64,10 @@ var paths = {
     srcbase: undefined,
     //tmpdir: Path.join(require('os').tmpdir(), 'fireball'),
     tmpdir: Path.join(proj, 'temp'),
-    dest: Path.join(proj, 'library/bundle.js'),
+    dest: Path.resolve(proj, opts.dest),
 };
+
+console.log('Output ' + paths.dest);
 
 /////////////////////////////////////////////////////////////////////////////
 // tasks
@@ -61,9 +84,9 @@ gulp.task('clean', function() {
 var precompiledPaths = null;
 
 /**
-    * pre-compile
-    * 以单文件为单位，将文件进行预编译，将编译后的文件存放到 tempScriptDir，将文件列表放到 precompiledPaths
-    */
+ * pre-compile
+ * 以单文件为单位，将文件进行预编译，将编译后的文件存放到 tempScriptDir，将文件列表放到 precompiledPaths
+ */
 gulp.task('pre-compile', function (done) {
     // clear
     var patternToDel = tempScriptDir + '/**/*'; // IMPORTANT

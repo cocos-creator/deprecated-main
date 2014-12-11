@@ -10,6 +10,7 @@
         "del": "",
         "gulp": "",
         "gulp-util": "",
+        "nomnom": "",
         "vinyl-source-stream": "",    
         "through": "",
         "browserify": ""
