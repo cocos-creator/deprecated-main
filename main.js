@@ -206,7 +206,7 @@ function start() {
     App.on('ready', function() {
         registerProtocol();
         initFireApp();
-        Fire.hint("Welcome to Fireball-x! The next-gen html5 game engine.");
+        Fire.info("Welcome to Fireball-x! The next-gen html5 game engine.");
 
         // check if project valid
         try {
