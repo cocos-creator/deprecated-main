@@ -17,7 +17,7 @@ global.Fire = {};
 
 var _options = {};
 
-// this will prevent default atom-shell uncaughtException 
+// this will prevent default atom-shell uncaughtException
 process.removeAllListeners('uncaughtException');
 process.on('uncaughtException', function(error) {
     if ( Fire && Fire.error ) {
@@ -33,7 +33,7 @@ function parseArgv( argv ) {
     Nomnom
     .script("fire")
     .option('project', { position: 0, help: "The fireball project file." })
-    .option('version', { abbr: 'v', flag: true, help: 'Print the version.', 
+    .option('version', { abbr: 'v', flag: true, help: 'Print the version.',
             callback: function () { return FIRE_VER; } })
     .option('help', { abbr: 'h', flag: true, help: 'Print this usage message.' })
     .option('dev', { abbr: 'd', flag: true, help: 'Run in development mode.' })
@@ -91,7 +91,7 @@ function saveProfile () {
 function registerProtocol () {
     console.log( 'Register protocol' );
 
-    // register protocol 
+    // register protocol
     var Protocol = require('protocol');
     Protocol.registerProtocol('fire', function(request) {
         var url = decodeURIComponent(request.url);
@@ -106,9 +106,14 @@ function registerProtocol () {
 
     Protocol.registerProtocol('library', function(request) {
         var url = decodeURIComponent(request.url);
-        var relpath = url.substr(10);
-        var file = Path.join(Fire.AssetDB.getLibraryPath(),relpath);
-        return new Protocol.RequestFileJob(file);
+        var data = Url.parse(url);
+        var relativePath = data.hostname;
+        if ( data.pathname ) {
+            relativePath = Path.join( relativePath, data.pathname );
+        }
+        var file = Path.join(Fire.AssetDB.getLibraryPath(), relativePath);
+        var result = new Protocol.RequestFileJob(file);
+        return result;
     });
 
     // DISABLE:
@@ -189,9 +194,9 @@ function start() {
     App.on('will-finish-launching', function() {
         if ( !_options.dev ) {
             var crashReporter = require('crash-reporter');
-            crashReporter.start({ 
-                productName: 'Fireball-x', 
-                companyName: 'FireBox', 
+            crashReporter.start({
+                productName: 'Fireball-x',
+                companyName: 'FireBox',
                 submitUrl: 'https://fireball-x.im/crash-report',
                 autoSubmit: false,
             });
