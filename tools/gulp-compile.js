@@ -73,15 +73,24 @@ console.log('Output ' + paths.dest);
 // tasks
 /////////////////////////////////////////////////////////////////////////////
 
+// config
 var tempScriptDir = paths.tmpdir + '/scripts';
 
+// shared variable
+var precompiledPaths = null;
+
 // clean
-gulp.task('clean', function() {
+gulp.task('clean', function () {
     del(paths.dest);
     del(tempScriptDir, { force: true });
 });
 
-var precompiledPaths = null;
+function insertMeta () {
+    function write (file) {
+
+    }
+    return through(write);
+}
 
 /**
  * pre-compile
@@ -90,16 +99,15 @@ var precompiledPaths = null;
 gulp.task('pre-compile', function (done) {
     // clear
     var patternToDel = tempScriptDir + '/**/*'; // IMPORTANT
-    //del.sync(patternToDel, { force: true });
     del(patternToDel, { force: true }, function (err) {
         if (err) {
             done(err);
             return;
         }
         // copy
-    //setTimeout(function saveDeleted() {
         precompiledPaths = [];
         gulp.src(paths.src, { base: paths.srcbase })
+            //.pipe(insertMeta())
             .pipe(gulp.dest(tempScriptDir))
             .pipe(through(function write(file) {
                 // TODO: 检查 utf-8 bom 文件头否则会不支持require中文路径
@@ -111,7 +119,6 @@ gulp.task('pre-compile', function (done) {
                 precompiledPaths.push(file.relative);
             }))
             .on('end', done);
-    //}, 1000);
     });
 });
     
