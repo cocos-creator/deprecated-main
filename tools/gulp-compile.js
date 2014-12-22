@@ -85,9 +85,19 @@ gulp.task('clean', function () {
     del(tempScriptDir, { force: true });
 });
 
-function insertMeta () {
+function addDebugInfo () {
+    var footer = "Fire._requiringStack.pop();";
+    var footerBuf = new Buffer(footer);
     function write (file) {
-
+        if ( file.isStream() ) {
+            this.emit('error', new gutil.PluginError('addDebugInfo', 'Streaming not supported'));
+            return;
+        }
+        var header = "Fire._requiringStack.push('" +
+                     Path.basename(file.path, Path.extname(file.path)) +
+                     "');\n";
+        file.contents = Buffer.concat([new Buffer(header), file.contents, footerBuf]);
+        this.emit('data', file);
     }
     return through(write);
 }
@@ -106,9 +116,11 @@ gulp.task('pre-compile', function (done) {
         }
         // copy
         precompiledPaths = [];
-        gulp.src(paths.src, { base: paths.srcbase })
-            //.pipe(insertMeta())
-            .pipe(gulp.dest(tempScriptDir))
+        var stream = gulp.src(paths.src, { base: paths.srcbase });
+        if (debug) {
+            stream = stream.pipe(addDebugInfo());
+        }
+        stream.pipe(gulp.dest(tempScriptDir))
             .pipe(through(function write(file) {
                 // TODO: 检查 utf-8 bom 文件头否则会不支持require中文路径
                 var encodingValid = true;
@@ -121,7 +133,7 @@ gulp.task('pre-compile', function (done) {
             .on('end', done);
     });
 });
-    
+
 // browserify
 gulp.task('browserify', ['pre-compile'], function() {
     function getMain() {
@@ -168,7 +180,10 @@ gulp.task('browserify', ['pre-compile'], function() {
         b.require('./' + file, opts);
     }
     var bundle = b.bundle();
-    return bundle.on('error', console.error.bind(console, gutil.colors.red('Browserify Error')))
+    return bundle.on('error', function (error) {
+            console.error(gutil.colors.red('Browserify Error'), error.message);
+            process.exit(1);
+        })
         .pipe(source(Path.basename(paths.dest)))
         //.pipe(bufferify())
         .pipe(gulp.dest(Path.dirname(paths.dest)))
