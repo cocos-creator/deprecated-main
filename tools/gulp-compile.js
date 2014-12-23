@@ -1,4 +1,4 @@
-var Path = require('path');
+﻿var Path = require('path');
 var Readable = require('stream').Readable;
 
 var gulp = require('gulp');
@@ -60,7 +60,11 @@ console.log('Compiling ' + proj);
 /////////////////////////////////////////////////////////////////////////////
 
 var paths = {
-    src: Path.join(proj, 'assets/**/*.js'),
+    src: [
+        Path.join(proj, 'assets/**/*.js'),
+        '!**/Editor/**',    // 手工支持大小写，详见 GlobOptions 注释
+        '!**/editor/**',
+    ],
     srcbase: undefined,
     //tmpdir: Path.join(require('os').tmpdir(), 'fireball'),
     tmpdir: Path.join(proj, 'temp'),
@@ -80,19 +84,30 @@ var tempScriptDir = paths.tmpdir + '/scripts';
 var precompiledPaths = null;
 
 // clean
-gulp.task('clean', function () {
-    del(paths.dest);
-    del(tempScriptDir, { force: true });
+gulp.task('clean', function (done) {
+    var patternToDel = tempScriptDir + '/**/*'; // IMPORTANT
+    del(patternToDel, { force: true }, function (err) {
+        if (err) {
+            done(err);
+            return;
+        }
+        del(paths.dest);
+        done();
+    });
 });
 
 function addDebugInfo () {
     var footer = "Fire._requiringStack.pop();";
     var footerBuf = new Buffer(footer);
     function write (file) {
-        if ( file.isStream() ) {
+        if (file.isStream()) {
             this.emit('error', new gutil.PluginError('addDebugInfo', 'Streaming not supported'));
             return;
         }
+        if (file.isNull()) {
+            return;
+        }
+        //console.log('JS >>> ', file.path);
         var header = "Fire._requiringStack.push('" +
                      Path.basename(file.path, Path.extname(file.path)) +
                      "');\n";
@@ -106,32 +121,31 @@ function addDebugInfo () {
  * pre-compile
  * 以单文件为单位，将文件进行预编译，将编译后的文件存放到 tempScriptDir，将文件列表放到 precompiledPaths
  */
-gulp.task('pre-compile', function (done) {
-    // clear
-    var patternToDel = tempScriptDir + '/**/*'; // IMPORTANT
-    del(patternToDel, { force: true }, function (err) {
-        if (err) {
-            done(err);
-            return;
-        }
-        // copy
-        precompiledPaths = [];
-        var stream = gulp.src(paths.src, { base: paths.srcbase });
-        if (debug) {
-            stream = stream.pipe(addDebugInfo());
-        }
-        stream.pipe(gulp.dest(tempScriptDir))
-            .pipe(through(function write(file) {
-                // TODO: 检查 utf-8 bom 文件头否则会不支持require中文路径
-                var encodingValid = true;
-                if (!encodingValid) {
-                    this.emit('error', new gutil.PluginError('precompile', 'Sorry, encoding must be utf-8 (BOM): ' + file.relative, { showStack: false }));
-                    return;
-                }
-                precompiledPaths.push(file.relative);
-            }))
-            .on('end', done);
-    });
+gulp.task('pre-compile', ['clean'], function () {
+    // https://github.com/gulpjs/gulp/blob/master/docs/API.md#options
+    // https://github.com/isaacs/node-glob#options
+    var GlobOptions = {
+        base: paths.srcbase,
+        //nodir: true,  // not worked
+        //nocase = true;  // Windows 上用不了nocase，会有bug: https://github.com/isaacs/node-glob/issues/123
+        //nonull: true,
+    };
+
+    precompiledPaths = [];
+    var stream = gulp.src(paths.src, GlobOptions);
+    if (debug) {
+        stream = stream.pipe(addDebugInfo());
+    }
+    return stream.pipe(gulp.dest(tempScriptDir))
+        .pipe(through(function write(file) {
+            // TODO: 检查 utf-8 bom 文件头否则会不支持require中文路径
+            var encodingValid = true;
+            if (!encodingValid) {
+                this.emit('error', new gutil.PluginError('precompile', 'Sorry, encoding must be utf-8 (BOM): ' + file.relative, { showStack: false }));
+                return;
+            }
+            precompiledPaths.push(file.relative);
+        }));
 });
 
 // browserify
@@ -159,7 +173,7 @@ gulp.task('browserify', ['pre-compile'], function() {
         s._read = function () {
             this.push(content);
             this.push(null);
-        }
+        };
         return s;
     }
 

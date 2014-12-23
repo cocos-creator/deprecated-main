@@ -21,9 +21,9 @@ var ToolsRunner = {
      */
     spawn: function (command, args, callback) {
         if (!standalone) {
-            Fire.log('Running: ' + cwd + '>' + command + ' ' + args.join(' '));
+            Fire.log('Running: %s>%s %s', cwd, command, args.join(' '));
         }
-        
+
         // spawn process
 
         if (Fire.isWin32 && WinCMDTools.indexOf(command) !== -1) {
