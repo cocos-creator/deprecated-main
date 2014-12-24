@@ -125,8 +125,21 @@ function registerProtocol () {
 
     Protocol.registerProtocol('uuid', function(request) {
         var url = decodeURIComponent(request.url);
-        var uuid = url.substr(7);
-        var file = Fire.AssetDB.uuidToFspath(uuid);
+
+        //
+        var data = Url.parse(url);
+        var uuid = data.hostname;
+        if ( data.pathname ) {
+            uuid = Path.join( uuid, data.pathname );
+        }
+        var file = Path.join(Fire.AssetDB.getLibraryPath(), uuid.substring(0,2), uuid);
+
+        if ( data.query === "thumb" ) {
+            var rawfile = Fire.AssetDB.uuidToFspath(uuid);
+            file = file + ".thumb" + Path.extname(rawfile);
+        }
+
+        //
         return new Protocol.RequestFileJob(file);
     });
 }
