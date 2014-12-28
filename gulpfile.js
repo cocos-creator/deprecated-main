@@ -29,8 +29,8 @@ var paths = {
         '!static/platforms/shares/**/*'
     ],
     build_publish: {
-        src_min: ['../core/bin/core.min.js', '../engine/bin/engine.min.js'],
-        src_dev: ['../core/bin/core.dev.js', '../engine/bin/engine.dev.js'],
+        src_min: ['../core/bin/core.player.js', '../engine/bin/engine.player.js'],
+        src_dev: ['../core/bin/core.player.dev.js', '../engine/bin/engine.player.dev.js'],
 
         shares: ['static/platforms/shares/**/*'],
 
@@ -46,7 +46,7 @@ var paths = {
 };
 
 /////////////////////////////////////////////////////////////////////////////
-// 
+//
 /////////////////////////////////////////////////////////////////////////////
 
 // clean
@@ -118,8 +118,11 @@ function task_build_publish_js(templateVersion, editorVersion) {
                          .pipe(concat('blabla.js'));
         for (var i = 0, dests = paths.build_publish['dest_' + templateVersion]; i < dests.length; i++) {
             var dest = 'bin/' + editorVersion + '/static/platforms/' + dests[i];
-            stream = stream.pipe(rename(Path.basename(dest)))
-                           .pipe(gulp.dest(Path.dirname(dest)));
+            stream = stream.pipe(rename(Path.basename(dest)));
+            if (templateVersion === 'min') {
+                stream = stream.pipe(uglify());
+            }
+            stream = stream.pipe(gulp.dest(Path.dirname(dest)));
         }
         //stream.on('end', done);
         return stream;
@@ -224,3 +227,4 @@ gulp.task('watch-self', ['watch']);
 
 gulp.task('dev', ['main-dev', 'page_init_js-dev', 'launch_css-dev', 'static-dev', 'tools-dev', 'build-publish-dev'] );
 gulp.task('default', ['main-min', 'page_init_js-min', 'launch_css-min', 'static-min', 'tools-min', 'build-publish-min'] );
+gulp.task('all', ['default'] );
