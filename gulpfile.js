@@ -10,6 +10,8 @@ var uglify = require('gulp-uglify');
 var stylus = require('gulp-stylus');
 var del = require('del');
 
+var build_base = 'tools/build/';
+
 var paths = {
     main: [
         'main.js'
@@ -22,17 +24,19 @@ var paths = {
     ],
     tools: [
         'tools/**/*',
+        '!' + build_base + 'platforms/shares/',
+        '!' + build_base + 'platforms/shares/**/*'
     ],
     static: [
         'static/**/*',
-        '!static/platforms/shares/',
-        '!static/platforms/shares/**/*'
     ],
     build_publish: {
-        src_min: ['../core/bin/core.min.js', '../engine/bin/engine.min.js'],
-        src_dev: ['../core/bin/core.dev.js', '../engine/bin/engine.dev.js'],
+        src_min: ['../core/bin/core.player.js', '../engine/bin/engine.player.js'],
+        src_dev: ['../core/bin/core.player.dev.js', '../engine/bin/engine.player.dev.js'],
 
-        shares: ['static/platforms/shares/**/*'],
+        shares: [
+            build_base + 'platforms/shares/**/*'
+        ],
 
         dest_dev: [
             'web-desktop/template-dev/firaball-x.dev.js',
@@ -46,7 +50,7 @@ var paths = {
 };
 
 /////////////////////////////////////////////////////////////////////////////
-// 
+//
 /////////////////////////////////////////////////////////////////////////////
 
 // clean
@@ -117,13 +121,16 @@ function task_build_publish_js(templateVersion, editorVersion) {
         var stream = gulp.src(src)
                          .pipe(concat('blabla.js'));
         for (var i = 0, dests = paths.build_publish['dest_' + templateVersion]; i < dests.length; i++) {
-            var dest = 'bin/' + editorVersion + '/static/platforms/' + dests[i];
-            stream = stream.pipe(rename(Path.basename(dest)))
-                           .pipe(gulp.dest(Path.dirname(dest)));
+            var dest = Path.join('bin', editorVersion, build_base, 'platforms', dests[i]);
+            stream = stream.pipe(rename(Path.basename(dest)));
+            if (templateVersion === 'min') {
+                stream = stream.pipe(uglify());
+            }
+            stream = stream.pipe(gulp.dest(Path.dirname(dest)));
         }
         //stream.on('end', done);
         return stream;
-    })
+    });
     // register watch
     if (editorVersion === 'dev') {
         gulp.tasks[taskname].watch = function () {
@@ -134,23 +141,19 @@ function task_build_publish_js(templateVersion, editorVersion) {
     return taskname;
 }
 
-function task_copy_shares(editorVersion) {
+function task_copy_shares(templateVersion, editorVersion) {
     var src = paths.build_publish.shares;
-    var taskname = 'copy-shares-' + editorVersion;
+    var taskname = 'copy-shares-' + templateVersion + '_' + editorVersion;
     // register task
     gulp.task(taskname, function () {
         var stream = gulp.src(src);
         var i, dest;
-        for (i = 0, dests = paths.build_publish.dest_dev; i < dests.length; i++) {
-            dest = 'bin/' + editorVersion + '/static/platforms/' + dests[i];
-            stream = stream.pipe(gulp.dest(Path.dirname(dest)));
-        }
-        for (i = 0, dests = paths.build_publish.dest_min; i < dests.length; i++) {
-            dest = 'bin/' + editorVersion + '/static/platforms/' + dests[i];
+        for (i = 0, dests = paths.build_publish['dest_' + templateVersion]; i < dests.length; i++) {
+            dest = Path.join('bin', editorVersion, build_base, 'platforms', dests[i]);
             stream = stream.pipe(gulp.dest(Path.dirname(dest)));
         }
         return stream;
-    })
+    });
     // register watch
     if (editorVersion === 'dev') {
         gulp.tasks[taskname].watch = function () {
@@ -164,13 +167,15 @@ function task_copy_shares(editorVersion) {
 // build publish
 gulp.task('build-publish-dev', [
     task_build_publish_js('dev', 'dev'),
-    task_build_publish_js('min', 'dev'),
-    task_copy_shares('dev'),
+    //task_build_publish_js('min', 'dev'),
+    task_copy_shares('dev', 'dev'),
+    //task_copy_shares('min', 'dev'),
 ]);
 gulp.task('build-publish-min', [
     task_build_publish_js('dev', 'min'),
     task_build_publish_js('min', 'min'),
-    task_copy_shares('min'),
+    task_copy_shares('dev', 'min'),
+    task_copy_shares('min', 'min'),
 ]);
 
 // static-dev
@@ -206,7 +211,7 @@ gulp.task('tools-min', ['tools-dev'], function() {
 /////////////////////////////////////////////////////////////////////////////
 
 // watch
-gulp.task('watch', function() {
+gulp.task('watch-self', function() {
     gulp.watch(paths.main, ['main-dev']).on( 'error', gutil.log );
     gulp.watch(paths.page_init_js, ['page_init_js-dev']).on( 'error', gutil.log );
     gulp.watch(paths.launch_css, ['launch_css-dev']).on( 'error', gutil.log );
@@ -220,7 +225,8 @@ gulp.task('watch', function() {
         }
     }
 });
-gulp.task('watch-self', ['watch']);
+gulp.task('watch', ['watch-self']);
 
 gulp.task('dev', ['main-dev', 'page_init_js-dev', 'launch_css-dev', 'static-dev', 'tools-dev', 'build-publish-dev'] );
 gulp.task('default', ['main-min', 'page_init_js-min', 'launch_css-min', 'static-min', 'tools-min', 'build-publish-min'] );
+gulp.task('all', ['default'] );

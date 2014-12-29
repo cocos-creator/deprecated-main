@@ -8,7 +8,7 @@ var through = require('through');
 
 var Nomnom = require('nomnom');
 
-var ToolsRunner = require('./tools-runner');
+var ToolsRunner = require(Path.resolve('./tools/tools-runner'));
 
 // 有且只有平台所属的 task 以 build-platform_ 开头
 var BUILD_ = 'build-platform_';
@@ -59,7 +59,7 @@ console.log('Destination ' + dest);
 // configs
 /////////////////////////////////////////////////////////////////////////////
 
-var tmpl_base = './static/platforms/';
+var tmpl_base = './tools/build/platforms/';
 var paths = {
     template_web_desktop: tmpl_base + (debug ? 'web-desktop/template-dev/**/*' : 'web-desktop/template/**/*'),
     template_web_mobile: tmpl_base + (debug ? 'web-mobile/template-dev/**/*' : 'web-mobile/template/**/*'),
