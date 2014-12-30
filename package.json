@@ -11,7 +11,7 @@
         "gulp": "",
         "gulp-util": "",
         "nomnom": "",
-        "vinyl-source-stream": "",    
+        "vinyl-source-stream": "",
         "through": "",
         "browserify": ""
     },
