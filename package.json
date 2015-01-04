@@ -1,6 +1,6 @@
 {
     "name": "Fireball-x",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Fireball-x Application",
     "homepage": "http://fireball-x.github.io",
     "license": "MIT",
@@ -11,7 +11,7 @@
         "gulp": "",
         "gulp-util": "",
         "nomnom": "",
-        "vinyl-source-stream": "",    
+        "vinyl-source-stream": "",
         "through": "",
         "browserify": ""
     },
