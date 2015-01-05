@@ -1,11 +1,11 @@
 ﻿;window.onload = function () {
     function loadProjectSettings (callback) {
-        Fire._TextLoader('settings.json', function (json, error) {
+        Fire._JsonLoader('settings.json', function (json, error) {
             if (error) {
                 Fire.error(error);
             }
             else {
-                callback(JSON.parse(json));
+                callback(json);
             }
         });
     }
