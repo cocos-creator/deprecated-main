@@ -61,11 +61,9 @@ console.log('Compiling ' + proj);
 
 var paths = {
     src: [
-        Path.join(proj, 'assets/**/*.js'),
-        '!**/Editor/**',    // 手工支持大小写，详见 GlobOptions 注释
-        '!**/editor/**',
+        'assets/**/*.js',
+        '!**/{Editor,editor}/**',   // 手工支持大小写，详见下面注释
     ],
-    srcbase: undefined,
     //tmpdir: Path.join(require('os').tmpdir(), 'fireball'),
     tmpdir: Path.join(proj, 'temp'),
     dest: Path.resolve(proj, opts.dest),
@@ -91,7 +89,7 @@ gulp.task('clean', function (done) {
             done(err);
             return;
         }
-        del(paths.dest);
+        del(paths.dest, { force: true });
         done();
     });
 });
@@ -108,10 +106,12 @@ function addDebugInfo () {
             return;
         }
         //console.log('JS >>> ', file.path);
-        var header = "Fire._requiringStack.push('" +
-                     Path.basename(file.path, Path.extname(file.path)) +
-                     "');\n";
-        file.contents = Buffer.concat([new Buffer(header), file.contents, footerBuf]);
+        if (platform === 'editor') {
+            var header = "Fire._requiringStack.push('" +
+                         Path.basename(file.path, Path.extname(file.path)) +
+                         "');\n";
+            file.contents = Buffer.concat([new Buffer(header), file.contents, footerBuf]);
+        }
         this.emit('data', file);
     }
     return through(write);
@@ -125,7 +125,7 @@ gulp.task('pre-compile', ['clean'], function () {
     // https://github.com/gulpjs/gulp/blob/master/docs/API.md#options
     // https://github.com/isaacs/node-glob#options
     var GlobOptions = {
-        base: paths.srcbase,
+        cwd: proj,
         //nodir: true,  // not worked
         //nocase = true;  // Windows 上用不了nocase，会有bug: https://github.com/isaacs/node-glob/issues/123
         //nonull: true,
