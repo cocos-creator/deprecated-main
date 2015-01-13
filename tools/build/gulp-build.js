@@ -4,7 +4,7 @@ var fs = require('fs');
 var gulp = require('gulp');
 var gutil = require('gulp-util');
 //var del = require('del');
-var through = require('through');
+var es = require('event-stream');
 
 var Nomnom = require('nomnom');
 
@@ -92,7 +92,7 @@ gulp.task('compile', function (done) {
     if (debug) {
         args.push('--debug');
     }
-    
+
     // run!
     ToolsRunner.gulp('tools/gulp-compile.js', args, function (succeeded) {
         if (succeeded) {
@@ -125,7 +125,7 @@ function (done) {
 // build html
 function buildAndCopyWeb(src, callback) {
     return gulp.src(src)
-        .pipe(through(function write(file) {
+        .pipe(es.through(function write(file) {
             if (Path.extname(file.path) === '.html') {
                 console.log('generating html from ' + file.path);
                 var data = {

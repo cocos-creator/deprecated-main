@@ -1,11 +1,13 @@
 ﻿var Path = require('path');
+var Fs = require('fs');
 var Readable = require('stream').Readable;
+var Format = require('util').format;
 
 var gulp = require('gulp');
 var gutil = require('gulp-util');
 var del = require('del');
 
-var through = require('through');
+var es = require('event-stream');
 var browserify = require('browserify');
 var source = require('vinyl-source-stream');
 
@@ -94,27 +96,43 @@ gulp.task('clean', function (done) {
     });
 });
 
-function addDebugInfo () {
-    var footer = "Fire._requiringStack.pop();";
+function addMetaData () {
+    var footer = "Fire._RFpop();";
     var footerBuf = new Buffer(footer);
-    function write (file) {
+    return es.map(function (file, callback) {
         if (file.isStream()) {
-            this.emit('error', new gutil.PluginError('addDebugInfo', 'Streaming not supported'));
+            callback(new gutil.PluginError('addDebugInfo', 'Streaming not supported'));
             return;
         }
         if (file.isNull()) {
+            callback();
             return;
         }
         //console.log('JS >>> ', file.path);
-        if (platform === 'editor') {
-            var header = "Fire._requiringStack.push('" +
-                         Path.basename(file.path, Path.extname(file.path)) +
-                         "');\n";
+
+        // read uuid
+        Fs.readFile(file.path + '.meta', function (err, data) {
+            var uuid = '';
+            if ( !err ) {
+                try {
+                    uuid = JSON.parse(data).uuid || '';
+                }
+                catch (e) {
+                }
+                uuid = uuid.replace(/-/g, '');
+            }
+            var header;
+            if (platform === 'editor') {
+                var script = Path.basename(file.path, Path.extname(file.path));
+                header = Format("Fire._RFpush('%s', '%s');\n", uuid, script);
+            }
+            else {
+                header = Format("Fire._RFpush('%s');\n", uuid);
+            }
             file.contents = Buffer.concat([new Buffer(header), file.contents, footerBuf]);
-        }
-        this.emit('data', file);
-    }
-    return through(write);
+            callback(null, file);
+        });
+    });
 }
 
 /**
@@ -132,12 +150,10 @@ gulp.task('pre-compile', ['clean'], function () {
     };
 
     precompiledPaths = [];
-    var stream = gulp.src(paths.src, GlobOptions);
-    if (debug) {
-        stream = stream.pipe(addDebugInfo());
-    }
-    return stream.pipe(gulp.dest(tempScriptDir))
-        .pipe(through(function write(file) {
+    var stream = gulp.src(paths.src, GlobOptions)
+        .pipe(addMetaData())
+        .pipe(gulp.dest(tempScriptDir))
+        .pipe(es.through(function write(file) {
             // TODO: 检查 utf-8 bom 文件头否则会不支持require中文路径
             var encodingValid = true;
             if (!encodingValid) {
@@ -146,6 +162,7 @@ gulp.task('pre-compile', ['clean'], function () {
             }
             precompiledPaths.push(file.relative);
         }));
+    return stream;
 });
 
 // browserify

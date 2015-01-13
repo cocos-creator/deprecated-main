@@ -8,11 +8,11 @@
     "main": "main.js",
     "dependencies": {
         "del": "",
+        "event-stream": "",
         "gulp": "",
         "gulp-util": "",
         "nomnom": "",
         "vinyl-source-stream": "",
-        "through": "",
         "browserify": ""
     },
     "devDependencies": {
