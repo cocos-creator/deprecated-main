@@ -4,13 +4,13 @@ try {
 
     // prevent default drag
     document.addEventListener( "dragstart", function (event) {
-        event.preventDefault(); 
+        event.preventDefault();
     } );
     document.addEventListener( "drop", function (event) {
-        event.preventDefault(); 
+        event.preventDefault();
     } );
     document.addEventListener( "dragover", function (event) {
-        event.preventDefault(); 
+        event.preventDefault();
     } );
 
     // prevent contextmenu
