@@ -219,6 +219,7 @@ function start() {
     if ( _options.disableDirectWrite ) {
         App.commandLine.appendSwitch('disable-direct-write');
     }
+    App.commandLine.appendSwitch('disable-http-cache');
 
     //
     App.on('ready', function() {
