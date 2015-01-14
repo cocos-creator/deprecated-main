@@ -219,7 +219,8 @@ function start() {
     if ( _options.disableDirectWrite ) {
         App.commandLine.appendSwitch('disable-direct-write');
     }
-    App.commandLine.appendSwitch('disable-http-cache');
+    // DISABLE: http cache only happends afterwhile, not satisefy our demand (which need to happend immediately).
+    // App.commandLine.appendSwitch('disable-http-cache');
 
     //
     App.on('ready', function() {
