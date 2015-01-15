@@ -21,10 +21,11 @@ try {
 
     // prevent go back
     document.addEventListener( "keydown", function (event) {
-        // back
         if ( event.keyCode === 8 ) {
-            event.preventDefault();
-            event.stopPropagation();
+            if ( event.target === document.body ) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
         }
     } );
 
