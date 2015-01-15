@@ -4,13 +4,12 @@
 
     <script type="text/javascript" src="fire://page-init.js"></script>
     <script>
-        var fireID = JSON.parse(decodeURIComponent(location.search.substr(8)));
         var ipc = require('ipc');
         var Fire = {
             sendToCore: function ( message ) {
                 'use strict';
                 var args = [].slice.call( arguments );
-                ipc.send.apply( ipc, ['send2core@' + fireID].concat( args ) );
+                ipc.send.apply( ipc, ['send2core'].concat( args ) );
             },
         };
     </script>
