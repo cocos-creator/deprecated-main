@@ -1,64 +1,43 @@
 <html>
-    <head>
-        <title>Fireball-x Dashboard</title>
+<head>
+    <title>Fireball-x Dashboard</title>
 
-        <link rel="stylesheet" href="fire://ext/fontawesome/css/font-awesome.css">
+    <script type="text/javascript" src="fire://page-init.js"></script>
+    <script>
+        var fireID = JSON.parse(decodeURIComponent(location.search.substr(8)));
+        var ipc = require('ipc');
+        var Fire = {
+            sendToCore: function ( message ) {
+                'use strict';
+                var args = [].slice.call( arguments );
+                ipc.send.apply( ipc, ['send2core@' + fireID].concat( args ) );
+            },
+        };
+    </script>
 
-        <link rel="import" href="fire://ext/polymer/polymer.html">
-        <link rel="import" href="fire://src/editor/fire-dashboard/fire-dashboard.html">
+    <style>
+        body {
+            margin: 0px;
+            padding: 0px;
+            border: 0px;
 
-        <style>
-            body {
-                margin: 0px;
-                padding: 0px;
-                border: 0px;
+            overflow: hidden;
+            color: #ddd;
+            background-color: #333;
+        }
+    </style>
+</head>
 
-                overflow: hidden;
-                color: #ddd;
-                background-color: #333;
-            }
+<body>
+    <fire-dashboard></fire-dashboard>
 
-            html /deep/ .fa {
-                display: inline-block;
-                font-family: FontAwesome;
-                font-style: normal;
-                font-weight: normal;
-                line-height: 1;
-                -webkit-font-smoothing: antialiased;
-                -moz-osx-font-smoothing: grayscale;
-            }
+    <script type="text/javascript" src="fire://src/core/core.dev.js"></script>
 
-            html /deep/ .fa-gear:before {
-                content: "\f013"
-            }
+    <link rel="stylesheet" href="fire://ext/fontawesome/css/font-awesome.css">
+    <link rel="stylesheet" href="fire://src/editor-ui/editor-ui.css">
 
-            html /deep/ .fa-bars:before {
-                content: "\f0c9";
-            }
-
-            html /deep/ .fa-question-circle:before {
-                content: "\f059"
-            }
-
-            html /deep/ .fa-close:before {
-                content: "\f00d"
-            }
-        </style>
-
-        <script>
-            var fireID = JSON.parse(decodeURIComponent(location.search.substr(8)));
-            var ipc = require('ipc');
-            var Fire = {
-                sendToCore: function ( message ) {
-                    'use strict';
-                    var args = [].slice.call( arguments );
-                    ipc.send.apply( ipc, ['send2core@' + fireID].concat( args ) );
-                },
-            };
-        </script>
-    </head>
-
-    <body>
-        <fire-dashboard></fire-dashboard>
-    </body>
+    <link rel="import" href="fire://ext/polymer/polymer.html">
+    <link rel="import" href="fire://src/editor-ui/editor-ui.html">
+    <link rel="import" href="fire://src/editor/fire-dashboard/fire-dashboard.html">
+</body>
 </html>
