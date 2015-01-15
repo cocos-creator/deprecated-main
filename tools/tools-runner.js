@@ -48,12 +48,13 @@ var ToolsRunner = {
                 callback(succeeded);
             }
         });
+        return childProcess;
     },
 
     gulp: function (gulpfile, args, callback) {
         args.unshift('--gulpfile', gulpfile);
         args.unshift('--cwd', cwd);   // to prevent cwd changed by --gulpfile
-        this.spawn('gulp', args, callback);
+        return this.spawn('gulp', args, callback);
     },
 };
 
