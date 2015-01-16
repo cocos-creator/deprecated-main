@@ -97,8 +97,8 @@ gulp.task('clean', function (done) {
 });
 
 function addMetaData () {
-    var footer = "Fire._RFpop();";
-    var footerBuf = new Buffer(footer);
+    var footer = "\nFire._RFpop();";
+    var newLineFooter = '\n' + footer;
     return es.map(function (file, callback) {
         if (file.isStream()) {
             callback(new gutil.PluginError('addDebugInfo', 'Streaming not supported'));
@@ -121,15 +121,21 @@ function addMetaData () {
                 }
                 uuid = uuid.replace(/-/g, '');
             }
+            var contents = file.contents.toString();
             var header;
             if (platform === 'editor') {
                 var script = Path.basename(file.path, Path.extname(file.path));
-                header = Format("Fire._RFpush('%s', '%s');\n", uuid, script);
+                header = Format("Fire._RFpush('%s', '%s');\n// %s\n", uuid, script, file.relative);
             }
             else {
-                header = Format("Fire._RFpush('%s');\n", uuid);
+                header = Format("Fire._RFpush('%s');\n// %s\n", uuid, file.relative);
             }
-            file.contents = Buffer.concat([new Buffer(header), file.contents, footerBuf]);
+            var startsWithNewLine = (contents[0] === '\n' || contents[0] === '\r');
+            if ( !startsWithNewLine ) {
+                header += '\n'; // nicify
+            }
+            var endsWithNewLine = (contents[contents.length - 1] === '\n' || contents[contents.length - 1] === '\r');
+            file.contents = new Buffer(header + contents + (endsWithNewLine ? footer : newLineFooter));
             callback(null, file);
         });
     });
