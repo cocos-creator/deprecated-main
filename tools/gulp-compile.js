@@ -167,45 +167,45 @@ gulp.task('pre-compile', ['clean'], function () {
 
 // browserify
 gulp.task('browserify', ['pre-compile'], function() {
-    function getMain() {
-        // The main script just require all scripts to make them all loaded by engine.
-        var content = "";
-        for (var i = 0; i < precompiledPaths.length; ++i) {
-            var file = precompiledPaths[i];         // eg: xxx\sss.js
-            //var cmd = file.substring(0, file.length - Path.extname(file).length);  // eg: xxx\sss
-            //cmd = cmd.replace(/\\/g, '/');          // eg: xxx/sss
-            //cmd = "require('./" + cmd + "');\n";    // eg: require('./xxx/sss');
-            var cmd = Path.basename(file, Path.extname(file));
-            cmd = "require('" + cmd + "');\n";      // eg: require('sss');
-            content += cmd;
-        }
-        //precompiledPaths = null;
-        if (content.length === 0) {
-            content = '/* no script */';
-        }
-        return content;
-    }
-    function toStream( content ) {
-        var s = new Readable();
-        s._read = function () {
-            this.push(content);
-            this.push(null);
-        };
-        return s;
-    }
+    //function getMain() {
+    //    // The main script just require all scripts to make them all loaded by engine.
+    //    var content = "";
+    //    for (var i = 0; i < precompiledPaths.length; ++i) {
+    //        var file = precompiledPaths[i];         // eg: xxx\sss.js
+    //        //var cmd = file.substring(0, file.length - Path.extname(file).length);  // eg: xxx\sss
+    //        //cmd = cmd.replace(/\\/g, '/');          // eg: xxx/sss
+    //        //cmd = "require('./" + cmd + "');\n";    // eg: require('./xxx/sss');
+    //        var cmd = Path.basename(file, Path.extname(file));
+    //        cmd = "require('" + cmd + "');\n";      // eg: require('sss');
+    //        content += cmd;
+    //    }
+    //    //precompiledPaths = null;
+    //    if (content.length === 0) {
+    //        content = '/* no script */';
+    //    }
+    //    return content;
+    //}
+    //function toStream( content ) {
+    //    var s = new Readable();
+    //    s._read = function () {
+    //        this.push(content);
+    //        this.push(null);
+    //    };
+    //    return s;
+    //}
 
-    var main = getMain();
-    //console.log(main);
+    //var main = getMain();
     var opts = {
         debug: debug,
         basedir: tempScriptDir,
     };
-    var stream = toStream(main);
-
+    //var stream = toStream(main);
+    
     // https://github.com/substack/node-browserify#methods
-    var b = browserify(stream, opts);
+    var b = browserify(opts);
     for (var i = 0; i < precompiledPaths.length; ++i) {
         var file = precompiledPaths[i];
+        b.add('./' + file);
         // expose the filename so as to avoid specifying relative path in require()
         opts.expose = Path.basename(file, Path.extname(file));
         b.require('./' + file, opts);
