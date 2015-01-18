@@ -38,7 +38,13 @@ var ToolsRunner = {
         });
         childProcess.stdout.on('data', function (buf) {
             // log
-            console.log(buf.toString().trimRight());
+            var info = buf.toString().trimRight();
+            if (info.indexOf('Error:') !== -1) {
+                Fire.error(info);
+            }
+            else {
+                console.log(info);
+            }
         });
         childProcess.on('close', function (code) {
             // close
