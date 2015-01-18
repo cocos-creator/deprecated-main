@@ -62,20 +62,26 @@ var paths = {
         'assets/**/*.js',
         '!assets/**/{Editor,editor}/**',   // 手工支持大小写，详见下面注释
     ],
-    settings: 'settings',
+    pluginSettings: 'settings/plugin-settings.json',
     tmpdir: 'temp',
 
     dest: opts.dest,
     proj: Path.resolve(opts.project),
 };
 
-paths.settings = Path.join(paths.proj, paths.settings);
+paths.pluginSettings = Path.join(paths.proj, paths.pluginSettings);
 paths.tmpdir = Path.join(paths.proj, paths.tmpdir);
 //paths.tmpdir = Path.join(require('os').tmpdir(), 'fireball')
 paths.dest = Path.resolve(paths.proj, paths.dest);
 
 console.log('Compiling ' + paths.proj);
 console.log('Output ' + paths.dest);
+
+function getUserHome () {
+    return process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME'];
+}
+
+paths.globalPluginDir = Path.join(getUserHome(), '.fireball-x');
 
 /////////////////////////////////////////////////////////////////////////////
 // tasks
@@ -98,6 +104,49 @@ gulp.task('clean', function (done) {
         del(paths.dest, { force: true });
         done();
     });
+});
+
+var projectScripts;
+gulp.task('parseProjectPlugins', function () {
+    projectScripts = [];
+    return gulp.src('assets/**/package.json.meta', { cwd: paths.proj })
+        .pipe(es.through(function write (file) {
+            var data = JSON.parse(file.contents);
+            if ( !data.enable ) {
+                projectScripts.push('!assets/' + Path.dirname(file.relative) + '/**');
+            }
+        }));
+});
+
+var externScripts;
+gulp.task('getExternScripts', function (callback) {
+    externScripts = [];
+    // read plugin settings
+    function parse (entries, pluginDir) {
+        for (var name in entries) {
+            var entry = entries[name];
+            if (entry.enable) {
+                var dir = Path.join(pluginDir, name, '/**/*.js');
+                externScripts.push(dir);
+            }
+        }
+    }
+    Fs.readFile(paths.pluginSettings, function (err, data) {
+        if (err) {
+            console.warn('Failed to load', paths.pluginSettings);
+        }
+        else {
+            var setting = JSON.parse(data);
+            //parse(setting.builtin, paths.builtinPluginDir);
+            parse(setting.global, paths.globalPluginDir);
+        }
+        callback();
+    })
+});
+
+var scriptList;
+gulp.task('getScriptList', ['parseProjectPlugins', 'getExternScripts'], function () {
+    scriptList = paths.src.concat(projectScripts, externScripts);
 });
 
 function addMetaData () {
@@ -152,7 +201,7 @@ function addMetaData () {
  * pre-compile
  * 以单文件为单位，将文件进行预编译，将编译后的文件存放到 tempScriptDir，将文件列表放到 precompiledPaths
  */
-gulp.task('pre-compile', ['clean'], function () {
+gulp.task('pre-compile', ['clean', 'getScriptList'], function () {
     // https://github.com/gulpjs/gulp/blob/master/docs/API.md#options
     // https://github.com/isaacs/node-glob#options
     var GlobOptions = {
@@ -161,9 +210,9 @@ gulp.task('pre-compile', ['clean'], function () {
         //nocase = true;  // Windows 上用不了nocase，会有bug: https://github.com/isaacs/node-glob/issues/123
         //nonull: true,
     };
-
+    //console.log(scriptList);
     precompiledPaths = [];
-    var stream = gulp.src(paths.src, GlobOptions)
+    var stream = gulp.src(scriptList, GlobOptions)
         .pipe(addMetaData())
         .pipe(gulp.dest(tempScriptDir))
         .pipe(es.through(function write(file) {
