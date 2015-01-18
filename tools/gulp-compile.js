@@ -50,12 +50,8 @@ Nomnom.option('debug', {
 });
 
 var opts = Nomnom.parse();
-var proj = opts.project;
 var debug = opts.debug;
 var platform = opts.platform;
-
-proj = Path.resolve(proj);
-console.log('Compiling ' + proj);
 
 /////////////////////////////////////////////////////////////////////////////
 // configs
@@ -64,13 +60,21 @@ console.log('Compiling ' + proj);
 var paths = {
     src: [
         'assets/**/*.js',
-        '!**/{Editor,editor}/**',   // 手工支持大小写，详见下面注释
+        '!assets/**/{Editor,editor}/**',   // 手工支持大小写，详见下面注释
     ],
-    //tmpdir: Path.join(require('os').tmpdir(), 'fireball'),
-    tmpdir: Path.join(proj, 'temp'),
-    dest: Path.resolve(proj, opts.dest),
+    settings: 'settings',
+    tmpdir: 'temp',
+
+    dest: opts.dest,
+    proj: Path.resolve(opts.project),
 };
 
+paths.settings = Path.join(paths.proj, paths.settings);
+paths.tmpdir = Path.join(paths.proj, paths.tmpdir);
+//paths.tmpdir = Path.join(require('os').tmpdir(), 'fireball')
+paths.dest = Path.resolve(paths.proj, paths.dest);
+
+console.log('Compiling ' + paths.proj);
 console.log('Output ' + paths.dest);
 
 /////////////////////////////////////////////////////////////////////////////
@@ -101,7 +105,7 @@ function addMetaData () {
     var newLineFooter = '\n' + footer;
     return es.map(function (file, callback) {
         if (file.isStream()) {
-            callback(new gutil.PluginError('addDebugInfo', 'Streaming not supported'));
+            callback(new gutil.PluginError('addMetaData', 'Streaming not supported'));
             return;
         }
         if (file.isNull()) {
@@ -112,15 +116,18 @@ function addMetaData () {
 
         // read uuid
         Fs.readFile(file.path + '.meta', function (err, data) {
-            var uuid = '';
-            if ( !err ) {
-                try {
-                    uuid = JSON.parse(data).uuid || '';
-                }
-                catch (e) {
-                }
-                uuid = uuid.replace(/-/g, '');
+            if (err) {
+                callback(new gutil.PluginError('addMetaData', err));
+                return;
             }
+            var uuid = '';
+            try {
+                uuid = JSON.parse(data).uuid || '';
+            }
+            catch (e) {
+            }
+            uuid = uuid.replace(/-/g, '');
+
             var contents = file.contents.toString();
             var header;
             if (platform === 'editor') {
@@ -149,7 +156,7 @@ gulp.task('pre-compile', ['clean'], function () {
     // https://github.com/gulpjs/gulp/blob/master/docs/API.md#options
     // https://github.com/isaacs/node-glob#options
     var GlobOptions = {
-        cwd: proj,
+        cwd: paths.proj,
         //nodir: true,  // not worked
         //nocase = true;  // Windows 上用不了nocase，会有bug: https://github.com/isaacs/node-glob/issues/123
         //nonull: true,
