@@ -57,11 +57,15 @@ var platform = opts.platform;
 // configs
 /////////////////////////////////////////////////////////////////////////////
 
+function getScriptGlob(dir) {
+    return [
+        Path.join(dir, '**/*.js'),
+        '!' + Path.join(dir, '**/{Editor,editor}/**'),   // 手工支持大小写，详见下面注释
+    ];
+}
+
 var paths = {
-    src: [
-        'assets/**/*.js',
-        '!assets/**/{Editor,editor}/**',   // 手工支持大小写，详见下面注释
-    ],
+    src: getScriptGlob('assets'),
     pluginSettings: 'settings/plugin-settings.json',
     tmpdir: 'temp',
 
@@ -82,6 +86,8 @@ function getUserHome () {
 }
 
 paths.globalPluginDir = Path.join(getUserHome(), '.fireball-x');
+paths.builtinPluginDir = Path.resolve('builtin-plugins');
+
 
 /////////////////////////////////////////////////////////////////////////////
 // tasks
@@ -126,8 +132,8 @@ gulp.task('getExternScripts', function (callback) {
         for (var name in entries) {
             var entry = entries[name];
             if (entry.enable) {
-                var dir = Path.join(pluginDir, name, '/**/*.js');
-                externScripts.push(dir);
+                var dir = Path.join(pluginDir, name);
+                externScripts = externScripts.concat(getScriptGlob(dir));
             }
         }
     }
@@ -137,7 +143,7 @@ gulp.task('getExternScripts', function (callback) {
         }
         else {
             var setting = JSON.parse(data);
-            //parse(setting.builtin, paths.builtinPluginDir);
+            parse(setting.builtin, paths.builtinPluginDir);
             parse(setting.global, paths.globalPluginDir);
         }
         callback();
