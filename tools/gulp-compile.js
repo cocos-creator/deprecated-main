@@ -139,7 +139,7 @@ gulp.task('getExternScripts', function (callback) {
     }
     Fs.readFile(paths.pluginSettings, function (err, data) {
         if (err) {
-            console.warn('Failed to load', paths.pluginSettings);
+            // console.warn('Failed to load', paths.pluginSettings);
         }
         else {
             var setting = JSON.parse(data);
@@ -268,7 +268,7 @@ gulp.task('browserify', ['pre-compile'], function() {
         basedir: tempScriptDir,
     };
     //var stream = toStream(main);
-    
+
     // https://github.com/substack/node-browserify#methods
     var b = browserify(opts);
     for (var i = 0; i < precompiledPaths.length; ++i) {
