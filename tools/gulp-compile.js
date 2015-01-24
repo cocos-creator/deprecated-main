@@ -88,6 +88,7 @@ function getUserHome () {
 paths.globalPluginDir = Path.join(getUserHome(), '.fireball-x');
 paths.builtinPluginDir = Path.resolve('builtin-plugins');
 
+opts.compileGlobalPlugin = false;
 
 /////////////////////////////////////////////////////////////////////////////
 // tasks
@@ -126,25 +127,43 @@ gulp.task('parseProjectPlugins', function () {
 
 var externScripts;
 gulp.task('getExternScripts', function (callback) {
-    externScripts = [];
     // read plugin settings
-    function parse (entries, pluginDir) {
+    function getGlob (entries, pluginDir) {
+        var res = [];
         for (var name in entries) {
             var entry = entries[name];
             if (entry.enable) {
                 var dir = Path.join(pluginDir, name);
-                externScripts = externScripts.concat(getScriptGlob(dir));
+                res = res.concat(getScriptGlob(dir));
             }
         }
+        return res;
     }
+    externScripts = [];
     Fs.readFile(paths.pluginSettings, function (err, data) {
         if (err) {
             // console.warn('Failed to load', paths.pluginSettings);
         }
         else {
             var setting = JSON.parse(data);
-            parse(setting.builtin, paths.builtinPluginDir);
-            parse(setting.global, paths.globalPluginDir);
+
+            var builtinGlob = getGlob(setting.builtin, paths.builtinPluginDir);
+            externScripts = externScripts.concat(builtinGlob);
+
+            var globalGlob = getGlob(setting.global, paths.globalPluginDir);
+            if (opts.compileGlobalPlugin) {
+                externScripts = externScripts.concat(globalGlob);
+            }
+            else {
+                console.log(globalGlob);
+                gulp.src(globalGlob, {
+                    nodir: true,
+                    read: false,
+                }).on('data', function (file) {
+                    console.warn('Not allowed to include runtime script in global plugin:', file.path,
+                                 '\nMove the plugin to assets please.');
+                });
+            }
         }
         callback();
     })
