@@ -6,12 +6,12 @@ var Format = require('util').format;
 var gulp = require('gulp');
 var gutil = require('gulp-util');
 var del = require('del');
-
 var es = require('event-stream');
 var browserify = require('browserify');
 var source = require('vinyl-source-stream');
 
 var Nomnom = require('nomnom');
+var FirePath = require('fire-path');
 
 //var bufferify = require('vinyl-buffer');
 
@@ -86,7 +86,7 @@ function getUserHome () {
 }
 
 paths.globalPluginDir = Path.join(getUserHome(), '.fireball-x');
-paths.builtinPluginDir = Path.resolve('builtin-plugins');
+paths.builtinPluginDir = Path.resolve('builtin');
 
 opts.compileGlobalPlugin = false;
 
@@ -127,45 +127,85 @@ gulp.task('parseProjectPlugins', function () {
 
 var externScripts;
 gulp.task('getExternScripts', function (callback) {
-    // read plugin settings
-    function getGlob (entries, pluginDir) {
-        var res = [];
-        for (var name in entries) {
-            var entry = entries[name];
-            if (entry.enable) {
-                var dir = Path.join(pluginDir, name);
-                res = res.concat(getScriptGlob(dir));
+
+    function getExternScripts (setting) {
+        function getGlob (entries, pluginDir) {
+            var res = [];
+            for (var name in entries) {
+                var entry = entries[name];
+                if (entry.enable) {
+                    var dir = Path.join(pluginDir, name);
+                    res = res.concat(getScriptGlob(dir));
+                }
             }
+            return res;
         }
-        return res;
-    }
-    externScripts = [];
-    Fs.readFile(paths.pluginSettings, function (err, data) {
-        if (err) {
-            // console.warn('Failed to load', paths.pluginSettings);
+        var builtinGlob = getGlob(setting.builtins, paths.builtinPluginDir);
+        externScripts = [];
+        externScripts = externScripts.concat(builtinGlob);
+
+        var globalGlob = getGlob(setting.globals, paths.globalPluginDir);
+        if (opts.compileGlobalPlugin) {
+            externScripts = externScripts.concat(globalGlob);
         }
         else {
-            var setting = JSON.parse(data);
-
-            var builtinGlob = getGlob(setting.builtin, paths.builtinPluginDir);
-            externScripts = externScripts.concat(builtinGlob);
-
-            var globalGlob = getGlob(setting.global, paths.globalPluginDir);
-            if (opts.compileGlobalPlugin) {
-                externScripts = externScripts.concat(globalGlob);
-            }
-            else {
-                console.log(globalGlob);
-                gulp.src(globalGlob, {
-                    nodir: true,
-                    read: false,
-                }).on('data', function (file) {
+            // check runtime scripts of global plugins
+            gulp.src(globalGlob, { read: false, nodir: true })
+                .on('data', function (file) {
                     console.warn('Not allowed to include runtime script in global plugin:', file.path,
-                                 '\nMove the plugin to assets please.');
+                                    '\nMove the plugin to assets please.');
                 });
-            }
         }
+        console.log('externScripts', externScripts);
         callback();
+    }
+
+    function updatePluginSetting (setting, callback) {
+        var defaultSetting = {
+            enable: true,
+        };
+        function doUpdatePluginSetting (entries, pluginDir, cb) {
+            // get available plugins
+            gulp.src('*/package.json', { cwd: pluginDir, read: false, nodir: true })
+                .on('data', function (file) {
+                    var dir = Path.dirname(file.path);
+                    var name = Path.basename(dir);
+                    if (!(name in entries)) {
+                        console.log('Generate plugin settings for', dir);
+                        entries[name] = defaultSetting;
+                        dirty = true;
+                    }
+                })
+                .on('end', function () {
+                    cb();
+                });
+        }
+        var dirty = false;
+        setting.builtins = setting.builtins || {};
+        setting.globals = setting.globals || {};
+        doUpdatePluginSetting(setting.builtins, paths.builtinPluginDir, function () {
+            doUpdatePluginSetting(setting.globals, paths.globalPluginDir, function () {
+                callback(setting);
+                if (dirty) {
+                    Fs.writeFile(paths.pluginSettings, JSON.stringify(setting, null, 4));
+                }
+            });
+        });
+    }
+
+    // read plugin settings
+    Fs.readFile(paths.pluginSettings, function (err, data) {
+        if (err) {
+            updatePluginSetting({}, getExternScripts);
+        }
+        else {
+            var setting = {};
+            var content = data.toString();
+            if (content.trim()) {
+                setting = JSON.parse(content);
+            }
+            updatePluginSetting(setting, getExternScripts);
+        }
     })
 });
 
@@ -190,26 +230,48 @@ function addMetaData () {
 
         // read uuid
         Fs.readFile(file.path + '.meta', function (err, data) {
-            if (err) {
-                callback(new gutil.PluginError('addMetaData', err));
-                return;
-            }
             var uuid = '';
-            try {
-                uuid = JSON.parse(data).uuid || '';
+            if (err) {
+                if (FirePath.contains(paths.proj, file.path)) {
+                    // project script
+                    console.error('Failed to read meta file.');
+                    callback(err);
+                }
+                else {
+                    // external plugin script, no uuid
+                }
             }
-            catch (e) {
+            else {
+                try {
+                    uuid = JSON.parse(data).uuid;
+                }
+                catch (e) {
+                }
+                if (!uuid) {
+                    callback(new gutil.PluginError('addMetaData', 'Failed to read uuid from meta.'));
+                    return;
+                }
+                uuid = uuid.replace(/-/g, '');
             }
-            uuid = uuid.replace(/-/g, '');
 
             var contents = file.contents.toString();
             var header;
             if (platform === 'editor') {
                 var script = Path.basename(file.path, Path.extname(file.path));
-                header = Format("Fire._RFpush('%s', '%s');\n// %s\n", uuid, script, file.relative);
+                if (uuid) {
+                    header = Format("Fire._RFpush('%s', '%s');\n// %s\n", uuid, script, file.relative);
+                }
+                else {
+                    header = Format("Fire._RFpush('%s');\n// %s\n", script, file.relative);
+                }
             }
             else {
-                header = Format("Fire._RFpush('%s');\n// %s\n", uuid, file.relative);
+                if (uuid) {
+                    header = Format("Fire._RFpush('%s');\n// %s\n", uuid, file.relative);
+                }
+                else {
+                    header = Format("Fire._RFpush();\n// %s\n", file.relative);
+                }
             }
             var startsWithNewLine = (contents[0] === '\n' || contents[0] === '\r');
             if ( !startsWithNewLine ) {
