@@ -70,9 +70,9 @@ function fireurl ( url ) {
         case 'editor-core:':
             relativePath = url.substr(14);
             if ( _options.dev ) {
-                return './' + Path.join( 'src/editor-core/dev/', relativePath );
+                return './src/editor-core/dev/' + relativePath;
             }
-            return './' + Path.join( 'src/editor-core/min/', relativePath );
+            return './src/editor-core/min/' + relativePath;
 
         case 'assets:':
             return Fire.AssetDB.fspath(url);
