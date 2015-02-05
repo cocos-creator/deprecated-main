@@ -92,7 +92,7 @@ opts.compileGlobalPlugin = false;
 
 var bundleInfos = {
     // the all-in-one bundle for distributing
-    "all-in-one": {
+    "all_in_one": {
         suffix: '',
         scriptGlobs: [],
         scripts: [],
@@ -234,12 +234,12 @@ gulp.task('getExternScripts', function (callback) {
 gulp.task('getScriptGlobs', ['parseProjectPlugins', 'getExternScripts'], function () {
     bundleInfos.project.scriptGlobs = paths.src.concat(bundleInfos.project.scriptGlobs);
     if ( opts.compileGlobalPlugin ) {
-        bundleInfos["all-in-one"].scriptGlobs = [].concat(bundleInfos.builtin.scriptGlobs,
+        bundleInfos["all_in_one"].scriptGlobs = [].concat(bundleInfos.builtin.scriptGlobs,
                                                           bundleInfos.global.scriptGlobs,
                                                           bundleInfos.project.scriptGlobs);
     }
     else {
-        bundleInfos["all-in-one"].scriptGlobs = [].concat(bundleInfos.builtin.scriptGlobs,
+        bundleInfos["all_in_one"].scriptGlobs = [].concat(bundleInfos.builtin.scriptGlobs,
                                                           bundleInfos.project.scriptGlobs);
     }
 });
