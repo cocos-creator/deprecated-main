@@ -1,4 +1,4 @@
-﻿var Path = require('path');
+﻿var Path = require('fire-path');
 var Fs = require('fs');
 var Readable = require('stream').Readable;
 var Format = require('util').format;
@@ -11,7 +11,6 @@ var browserify = require('browserify');
 var source = require('vinyl-source-stream');
 
 var Nomnom = require('nomnom');
-var FirePath = require('fire-path');
 
 //var bufferify = require('vinyl-buffer');
 
@@ -52,6 +51,7 @@ Nomnom.option('debug', {
 var opts = Nomnom.parse();
 var debug = opts.debug;
 var platform = opts.platform;
+var isEditor = platform === 'editor';
 
 /////////////////////////////////////////////////////////////////////////////
 // configs
@@ -90,15 +90,39 @@ paths.builtinPluginDir = Path.resolve('builtin');
 
 opts.compileGlobalPlugin = false;
 
+var bundleInfos = {
+    // the all-in-one bundle for distributing
+    "all-in-one": {
+        suffix: '',
+        scriptGlobs: [],
+        scripts: [],
+    },
+    // builtin plugin runtime
+    "builtin": {
+        suffix: '.builtin',     // 编辑器下，插件编译出来的脚本会带上相应的后缀
+        scriptGlobs: [],
+        scripts: [],
+    },
+    // global plugin runtime
+    "global": {
+        suffix: '.global',
+        scriptGlobs: [],
+        scripts: [],
+    },
+    // project runtime scripts (plugin included)
+    "project": {
+        suffix: '.project',
+        scriptGlobs: [],
+        scripts: [],
+    },
+};
+
 /////////////////////////////////////////////////////////////////////////////
 // tasks
 /////////////////////////////////////////////////////////////////////////////
 
 // config
 var tempScriptDir = paths.tmpdir + '/scripts';
-
-// shared variable
-var precompiledPaths = null;
 
 // clean
 gulp.task('clean', function (done) {
@@ -108,24 +132,28 @@ gulp.task('clean', function (done) {
             done(err);
             return;
         }
-        del(paths.dest, { force: true });
+        var destFilePrefix = Path.join(Path.dirname(paths.dest), Path.basenameNoExt(paths.dest));
+        var destFileExt = Path.extname(paths.dest);
+        for (var taskname in bundleInfos) {
+            var info = bundleInfos[taskname];
+            destFile = destFilePrefix + info.suffix + destFileExt;
+            del(destFile, { force: true });
+        }
         done();
     });
 });
 
-var projectScripts;
 gulp.task('parseProjectPlugins', function () {
-    projectScripts = [];
+    bundleInfos.project.scriptGlobs = [];
     return gulp.src('assets/**/package.json.meta', { cwd: paths.proj })
         .pipe(es.through(function write (file) {
             var data = JSON.parse(file.contents);
             if ( !data.enable ) {
-                projectScripts.push('!assets/' + Path.dirname(file.relative) + '/**');
+                bundleInfos.project.scriptGlobs.push('!assets/' + Path.dirname(file.relative) + '/**');
             }
         }));
 });
 
-var externScripts;
 gulp.task('getExternScripts', function (callback) {
 
     function getExternScripts (setting) {
@@ -140,23 +168,17 @@ gulp.task('getExternScripts', function (callback) {
             }
             return res;
         }
-        var builtinGlob = getGlob(setting.builtins, paths.builtinPluginDir);
-        externScripts = [];
-        externScripts = externScripts.concat(builtinGlob);
-
-        var globalGlob = getGlob(setting.globals, paths.globalPluginDir);
-        if (opts.compileGlobalPlugin) {
-            externScripts = externScripts.concat(globalGlob);
-        }
-        else {
-            // check runtime scripts of global plugins
-            gulp.src(globalGlob, { read: false, nodir: true })
+        bundleInfos.builtin.scriptGlobs = getGlob(setting.builtins, paths.builtinPluginDir);
+        bundleInfos.global.scriptGlobs = getGlob(setting.globals, paths.globalPluginDir);
+        if ( !opts.compileGlobalPlugin ) {
+            // PROHIBIT runtime scripts of global plugins
+            gulp.src(bundleInfos.global.scriptGlobs, { read: false, nodir: true })
                 .on('data', function (file) {
                     console.warn('Not allowed to include runtime script in global plugin:', file.path,
                                     '\nMove the plugin to assets please.');
                 });
+            bundleInfos.global.scriptGlobs = [];
         }
-        console.log('externScripts', externScripts);
         callback();
     }
 
@@ -209,9 +231,17 @@ gulp.task('getExternScripts', function (callback) {
     })
 });
 
-var scriptList;
-gulp.task('getScriptList', ['parseProjectPlugins', 'getExternScripts'], function () {
-    scriptList = paths.src.concat(projectScripts, externScripts);
+gulp.task('getScriptGlobs', ['parseProjectPlugins', 'getExternScripts'], function () {
+    bundleInfos.project.scriptGlobs = paths.src.concat(bundleInfos.project.scriptGlobs);
+    if ( opts.compileGlobalPlugin ) {
+        bundleInfos["all-in-one"].scriptGlobs = [].concat(bundleInfos.builtin.scriptGlobs,
+                                                          bundleInfos.global.scriptGlobs,
+                                                          bundleInfos.project.scriptGlobs);
+    }
+    else {
+        bundleInfos["all-in-one"].scriptGlobs = [].concat(bundleInfos.builtin.scriptGlobs,
+                                                          bundleInfos.project.scriptGlobs);
+    }
 });
 
 function addMetaData () {
@@ -232,7 +262,7 @@ function addMetaData () {
         Fs.readFile(file.path + '.meta', function (err, data) {
             var uuid = '';
             if (err) {
-                if (FirePath.contains(paths.proj, file.path)) {
+                if (Path.contains(paths.proj, file.path)) {
                     // project script
                     console.error('Failed to read meta file.');
                     callback(err);
@@ -256,7 +286,7 @@ function addMetaData () {
 
             var contents = file.contents.toString();
             var header;
-            if (platform === 'editor') {
+            if (isEditor) {
                 var script = Path.basename(file.path, Path.extname(file.path));
                 if (uuid) {
                     header = Format("Fire._RFpush('%s', '%s');\n// %s\n", uuid, script, file.relative);
@@ -285,10 +315,12 @@ function addMetaData () {
 }
 
 /**
- * pre-compile
- * 以单文件为单位，将文件进行预编译，将编译后的文件存放到 tempScriptDir，将文件列表放到 precompiledPaths
+ * 以单文件为单位，将文件进行预编译，将编译后的文件存放到 destDir，将文件列表存到 outputFiles
+ * @param {string[]} srcGlobs
+ * @param {string} destDir
+ * @param {string[]} outputFiles
  */
-gulp.task('pre-compile', ['clean', 'getScriptList'], function () {
+function precompile (info, destDir) {
     // https://github.com/gulpjs/gulp/blob/master/docs/API.md#options
     // https://github.com/isaacs/node-glob#options
     var GlobOptions = {
@@ -297,9 +329,8 @@ gulp.task('pre-compile', ['clean', 'getScriptList'], function () {
         //nocase = true;  // Windows 上用不了nocase，会有bug: https://github.com/isaacs/node-glob/issues/123
         //nonull: true,
     };
-    //console.log(scriptList);
-    precompiledPaths = [];
-    var stream = gulp.src(scriptList, GlobOptions)
+    info.scripts.length = 0;
+    var stream = gulp.src(info.scriptGlobs, GlobOptions)
         .pipe(addMetaData())
         .pipe(gulp.dest(tempScriptDir))
         .pipe(es.through(function write(file) {
@@ -309,51 +340,21 @@ gulp.task('pre-compile', ['clean', 'getScriptList'], function () {
                 this.emit('error', new gutil.PluginError('precompile', 'Sorry, encoding must be utf-8 (BOM): ' + file.relative, { showStack: false }));
                 return;
             }
-            precompiledPaths.push(file.relative);
+            info.scripts.push(file.relative);
         }));
     return stream;
-});
+}
 
-// browserify
-gulp.task('browserify', ['pre-compile'], function() {
-    //function getMain() {
-    //    // The main script just require all scripts to make them all loaded by engine.
-    //    var content = "";
-    //    for (var i = 0; i < precompiledPaths.length; ++i) {
-    //        var file = precompiledPaths[i];         // eg: xxx\sss.js
-    //        //var cmd = file.substring(0, file.length - Path.extname(file).length);  // eg: xxx\sss
-    //        //cmd = cmd.replace(/\\/g, '/');          // eg: xxx/sss
-    //        //cmd = "require('./" + cmd + "');\n";    // eg: require('./xxx/sss');
-    //        var cmd = Path.basename(file, Path.extname(file));
-    //        cmd = "require('" + cmd + "');\n";      // eg: require('sss');
-    //        content += cmd;
-    //    }
-    //    //precompiledPaths = null;
-    //    if (content.length === 0) {
-    //        content = '/* no script */';
-    //    }
-    //    return content;
-    //}
-    //function toStream( content ) {
-    //    var s = new Readable();
-    //    s._read = function () {
-    //        this.push(content);
-    //        this.push(null);
-    //    };
-    //    return s;
-    //}
-
-    //var main = getMain();
+function browserifyTask (srcPaths, destDir, destFile) {
     var opts = {
         debug: debug,
         basedir: tempScriptDir,
     };
-    //var stream = toStream(main);
 
     // https://github.com/substack/node-browserify#methods
     var b = browserify(opts);
-    for (var i = 0; i < precompiledPaths.length; ++i) {
-        var file = precompiledPaths[i];
+    for (var i = 0; i < srcPaths.length; ++i) {
+        var file = srcPaths[i];
         b.add('./' + file);
         // expose the filename so as to avoid specifying relative path in require()
         opts.expose = Path.basename(file, Path.extname(file));
@@ -364,11 +365,42 @@ gulp.task('browserify', ['pre-compile'], function() {
             console.error(gutil.colors.red('Browserify Error'), error.message);
             process.exit(1);
         })
-        .pipe(source(Path.basename(paths.dest)))
-        //.pipe(bufferify())
-        .pipe(gulp.dest(Path.dirname(paths.dest)))
+        .pipe(source(destFile))
+        .pipe(gulp.dest(destDir))
         ;
-});
+}
+
+function createTask(taskname, info) {
+    gulp.task('pre-compile-' + taskname, ['clean', 'getScriptGlobs'], function () {
+        return precompile(info, tempScriptDir);
+    });
+    gulp.task('browserify-' + taskname, ['pre-compile-' + taskname], function () {
+        var destDir = Path.dirname(paths.dest);
+        var destFile = Path.basename(paths.dest);
+        if (info.suffix) {
+            destFile = Path.basenameNoExt(destFile) + info.suffix + Path.extname(destFile);
+        }
+        return browserifyTask(info.scripts, destDir, destFile);
+    });
+}
+
+// create tasks
+for (var taskname in bundleInfos) {
+    var info = bundleInfos[taskname];
+    createTask(taskname, info);
+}
+
+if (isEditor) {
+    if ( opts.compileGlobalPlugin ) {
+        gulp.task('browserify', ['browserify-builtin', 'browserify-global', 'browserify-project']);
+    }
+    else {
+        gulp.task('browserify', ['browserify-builtin', 'browserify-project']);
+    }
+}
+else {
+    gulp.task('browserify', ['browserify-all_in_one']);
+}
 
 // default
 gulp.task('default', ['browserify']);
