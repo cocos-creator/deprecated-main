@@ -72,7 +72,7 @@ function fireurl ( url ) {
             if ( _options.dev ) {
                 return './src/editor-core/dev/' + relativePath;
             }
-            return './src/editor-core/min/' + relativePath;
+            return './src/editor-core/dev/' + relativePath;
 
         case 'assets:':
             return Fire.AssetDB.fspath(url);
@@ -155,9 +155,9 @@ function initFireApp () {
                                   );
     }
     else {
-        global.Fire = require('./src/core/core.min');
+        global.Fire = require('./src/core/core.dev');
         global.Fire = Fire.mixin( global.Fire,
-                                  require('./src/editor-share/editor-share.min')
+                                  require('./src/editor-share/editor-share.dev')
                                   );
     }
     global.Fire.url = fireurl;

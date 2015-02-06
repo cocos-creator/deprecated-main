@@ -31,7 +31,7 @@ var paths = {
         'static/**/*',
     ],
     build_publish: {
-        src_min: ['../core/bin/core.player.js', '../engine/bin/engine.player.js'],
+        src_min: ['../core/bin/core.player.dev.js', '../engine/bin/engine.player.dev.js'],
         src_dev: ['../core/bin/core.player.dev.js', '../engine/bin/engine.player.dev.js'],
 
         shares: [
@@ -167,9 +167,9 @@ function task_copy_shares(templateVersion, editorVersion) {
 // build publish
 gulp.task('build-publish-dev', [
     task_build_publish_js('dev', 'dev'),
-    //task_build_publish_js('min', 'dev'),
+    task_build_publish_js('min', 'dev'),
     task_copy_shares('dev', 'dev'),
-    //task_copy_shares('min', 'dev'),
+    task_copy_shares('min', 'dev'),
 ]);
 gulp.task('build-publish-min', [
     task_build_publish_js('dev', 'min'),
@@ -186,7 +186,7 @@ gulp.task('static-dev', ['build-publish-dev'], function() {
 });
 
 // static-min
-gulp.task('static-min', ['build-publish-min', 'static-dev'], function() {
+gulp.task('static-min', ['build-publish-min'], function() {
     return gulp.src(paths.static)
     .pipe(gulp.dest('bin/min/static'))
     ;
@@ -204,6 +204,13 @@ gulp.task('tools-min', ['tools-dev'], function() {
     return gulp.src(paths.tools)
     .pipe(gulp.dest('bin/min/tools'))
     ;
+});
+
+// copy min files to dev
+gulp.task('copy-min', ['min'], function() {
+    del.sync('bin/dev');
+    return gulp.src('bin/min/**/*')
+        .pipe(gulp.dest('bin/dev/'));
 });
 
 /////////////////////////////////////////////////////////////////////////////
@@ -228,5 +235,6 @@ gulp.task('watch-self', function() {
 gulp.task('watch', ['watch-self']);
 
 gulp.task('dev', ['main-dev', 'page_init_js-dev', 'launch_css-dev', 'static-dev', 'tools-dev', 'build-publish-dev'] );
-gulp.task('default', ['main-min', 'page_init_js-min', 'launch_css-min', 'static-min', 'tools-min', 'build-publish-min'] );
+gulp.task('min', ['main-min', 'page_init_js-min', 'launch_css-min', 'static-min', 'tools-min', 'build-publish-min'] );
+gulp.task('default',['copy-min']);
 gulp.task('all', ['default'] );

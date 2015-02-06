@@ -17,6 +17,7 @@
     },
     "devDependencies": {
         "gulp-concat": "",
-        "gulp-rename": ""
+        "gulp-rename": "",
+        "gulp-uglify": ""
     }
 }
