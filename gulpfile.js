@@ -218,7 +218,7 @@ gulp.task('copy-min', ['min'], function() {
 /////////////////////////////////////////////////////////////////////////////
 
 // watch
-gulp.task('watch-self', function() {
+gulp.task('watch', function() {
     gulp.watch(paths.main, ['main-dev']).on( 'error', gutil.log );
     gulp.watch(paths.page_init_js, ['page_init_js-dev']).on( 'error', gutil.log );
     gulp.watch(paths.launch_css, ['launch_css-dev']).on( 'error', gutil.log );
@@ -232,7 +232,7 @@ gulp.task('watch-self', function() {
         }
     }
 });
-gulp.task('watch', ['watch-self']);
+//gulp.task('watch', ['watch-self']);
 
 gulp.task('dev', ['main-dev', 'page_init_js-dev', 'launch_css-dev', 'static-dev', 'tools-dev', 'build-publish-dev'] );
 gulp.task('min', ['main-min', 'page_init_js-min', 'launch_css-min', 'static-min', 'tools-min', 'build-publish-min'] );
