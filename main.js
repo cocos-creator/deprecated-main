@@ -132,7 +132,7 @@ function registerProtocol () {
         if ( data.pathname ) {
             uuid = Path.join( uuid, data.pathname );
         }
-        var file = Path.join(Fire.AssetDB.getLibraryPath(), uuid.substring(0,2), uuid);
+        var file = Fire.AssetDB.uuidToLibraryPath(uuid);
 
         if ( data.query === "thumb" ) {
             var rawfile = Fire.AssetDB.uuidToFspath(uuid);
