@@ -69,7 +69,7 @@ function fireurl ( url ) {
 
         case 'editor-core:':
             relativePath = url.substr(14);
-            return Path.join( FIRE_PATH, 'src/editor-core/dev/', relativePath );
+            return Path.join( FIRE_PATH, 'src/editor-core/', relativePath );
 
         case 'assets:':
             return Fire.AssetDB.fspath(url);
@@ -145,9 +145,9 @@ function initFireApp () {
     console.log( 'Initializing Fire' );
 
     // load Fire core module
-    global.Fire = require('./src/core/core.dev');
+    global.Fire = require('./src/core/core');
     global.Fire = Fire.mixin( global.Fire,
-                             require('./src/editor-share/editor-share.dev')
+                             require('./src/editor-share/editor-share')
                             );
     global.Fire.url = fireurl;
     global.Fire.saveProfile = saveProfile;

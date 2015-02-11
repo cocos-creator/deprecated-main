@@ -31,7 +31,7 @@ var paths = {
         'static/**/*',
     ],
     build_publish: {
-        src_min: ['../core/bin/core.player.dev.js', '../engine/bin/engine.player.dev.js'],
+        src_min: ['../core/bin/core.player.js', '../engine/bin/engine.player.js'],
         src_dev: ['../core/bin/core.player.dev.js', '../engine/bin/engine.player.dev.js'],
 
         shares: [
@@ -232,7 +232,6 @@ gulp.task('watch', function() {
         }
     }
 });
-//gulp.task('watch', ['watch-self']);
 
 gulp.task('dev', ['main-dev', 'page_init_js-dev', 'launch_css-dev', 'static-dev', 'tools-dev', 'build-publish-dev'] );
 gulp.task('min', ['main-min', 'page_init_js-min', 'launch_css-min', 'static-min', 'tools-min', 'build-publish-min'] );
