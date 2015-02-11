@@ -23,18 +23,18 @@
     "url": "https://github.com/fireball-x/fireball/issues"
   },
   "dependencies": {
-        "del": "",
-        "event-stream": "",
-        "gulp": "",
-        "gulp-util": "",
-        "nomnom": "",
-        "vinyl-source-stream": "",
-        "browserify": ""
+        "del": "1.1.1",
+        "event-stream": "3.2.2",
+        "gulp": "3.8.11",
+        "gulp-util": "3.0.3",
+        "nomnom": "1.8.1",
+        "vinyl-source-stream": "1.0.0",
+        "browserify": "8.1.3"
     },
     "devDependencies": {
         "gulp-concat": "",
         "gulp-rename": "",
-        "gulp-uglify": "",
+        "gulp-uglify": "1.1.0",
         "gulp-download-fire-shell": ""
     },
     "native-modules": [
