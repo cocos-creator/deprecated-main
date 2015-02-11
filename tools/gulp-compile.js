@@ -78,7 +78,14 @@ paths.tmpdir = Path.join(paths.proj, paths.tmpdir);
 //paths.tmpdir = Path.join(require('os').tmpdir(), 'fireball')
 paths.dest = Path.resolve(paths.proj, paths.dest);
 
-console.log('Compiling ' + paths.proj);
+if (paths.proj === process.cwd()) {
+    console.error('Compile error: Invalid project path: %s', opts.project);
+    process.exit(1);
+}
+else {
+    console.log('Compiling ' + paths.proj);
+}
+
 console.log('Output ' + paths.dest);
 
 function getUserHome () {
@@ -362,7 +369,7 @@ function browserifyTask (srcPaths, destDir, destFile) {
     }
     var bundle = b.bundle();
     return bundle.on('error', function (error) {
-            console.error(gutil.colors.red('Browserify Error'), error.message);
+            console.error(gutil.colors.red('Compile error:'), error.message);
             process.exit(1);
         })
         .pipe(source(destFile))
