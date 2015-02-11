@@ -1,12 +1,28 @@
 {
-    "name": "Fireball-x",
-    "version": "0.1.3",
-    "description": "Fireball-x Application",
-    "homepage": "http://fireball-x.github.io",
-    "license": "MIT",
-    "licenseUrl": "http://opensource.org/licenses/MIT",
-    "main": "main.js",
-    "dependencies": {
+  "name": "Fireball",
+  "version": "0.1.3",
+  "fire-shell-version": "0.21.1",
+  "atom-shell-version": "0.21.1",
+  "description": "Fireball is the Html5 game engine for the future.",
+  "homepage": "http://fireball-x.com",
+  "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fireball-x/fireball.git"
+  },
+  "keywords": [
+    "fireball",
+    "game-engine",
+    "html5",
+    "mobile",
+    "editor"
+  ],
+  "author": "Firebox Technology",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/fireball-x/fireball/issues"
+  },
+  "dependencies": {
         "del": "",
         "event-stream": "",
         "gulp": "",
@@ -18,6 +34,10 @@
     "devDependencies": {
         "gulp-concat": "",
         "gulp-rename": "",
-        "gulp-uglify": ""
-    }
+        "gulp-uglify": "",
+        "gulp-download-fire-shell": ""
+    },
+    "native-modules": [
+        "lwip", "fire-watch", "font-manager"
+    ]
 }
