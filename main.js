@@ -11,7 +11,7 @@ var Chalk = require('chalk');
 // set global values
 global.FIRE_VER = "0.1.3";
 global.FIRE_PATH = __dirname;
-global.FIRE_DATA_PATH = App.getDataPath();
+global.FIRE_DATA_PATH = App.getPath('userData');
 global.FIRE_PROJECT_PATH = "";  // will be init in Fireball.open
 global.Fire = {};
 
@@ -69,10 +69,7 @@ function fireurl ( url ) {
 
         case 'editor-core:':
             relativePath = url.substr(14);
-            if ( _options.dev ) {
-                return './src/editor-core/dev/' + relativePath;
-            }
-            return './src/editor-core/dev/' + relativePath;
+            return Path.join( FIRE_PATH, 'src/editor-core/dev/', relativePath );
 
         case 'assets:':
             return Fire.AssetDB.fspath(url);
@@ -148,18 +145,10 @@ function initFireApp () {
     console.log( 'Initializing Fire' );
 
     // load Fire core module
-    if ( _options.dev ) {
-        global.Fire = require('./src/core/core.dev');
-        global.Fire = Fire.mixin( global.Fire,
-                                  require('./src/editor-share/editor-share.dev')
-                                  );
-    }
-    else {
-        global.Fire = require('./src/core/core.dev');
-        global.Fire = Fire.mixin( global.Fire,
-                                  require('./src/editor-share/editor-share.dev')
-                                  );
-    }
+    global.Fire = require('./src/core/core.dev');
+    global.Fire = Fire.mixin( global.Fire,
+                             require('./src/editor-share/editor-share.dev')
+                            );
     global.Fire.url = fireurl;
     global.Fire.saveProfile = saveProfile;
     global.Fire.Console = require( Fire.url('editor-core://fire-console') );
