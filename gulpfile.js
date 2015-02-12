@@ -6,6 +6,7 @@ var rename = require('gulp-rename');
 var gutil = require('gulp-util');
 var jshint = require('gulp-jshint');
 var stylish = require('jshint-stylish');
+var uglifyjs = require('gulp-uglifyjs');
 var uglify = require('gulp-uglify');
 var stylus = require('gulp-stylus');
 var del = require('del');
@@ -122,9 +123,10 @@ function task_build_publish_js(templateVersion, editorVersion) {
                          .pipe(concat('blabla.js'));
         for (var i = 0, dests = paths.build_publish['dest_' + templateVersion]; i < dests.length; i++) {
             var dest = Path.join('bin', editorVersion, build_base, 'platforms', dests[i]);
-            stream = stream.pipe(rename(Path.basename(dest)));
+            console.log("dest path: " + dest);
+            stream = stream.pipe(rename(Path.basename(dest))).pipe(gulp.dest('bin'));
             if (templateVersion === 'min') {
-                stream = stream.pipe(uglify());
+                stream = stream.pipe(uglifyjs());
             }
             stream = stream.pipe(gulp.dest(Path.dirname(dest)));
         }
