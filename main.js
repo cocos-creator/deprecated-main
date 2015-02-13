@@ -20,13 +20,7 @@ var _options = {};
 // this will prevent default atom-shell uncaughtException
 process.removeAllListeners('uncaughtException');
 process.on('uncaughtException', function(error) {
-    if ( Fire && Fire.error ) {
-        Fire.error(error.message);
-        console.error( Chalk.red(error.stack || error) );
-    }
-    else {
-        console.error( Chalk.red.inverse.bold('Error:') + ' ' + Chalk.red(error.stack || error) );
-    }
+    console.error( Chalk.red.inverse.bold('Uncaught Exception:') + ' ' + Chalk.red(error.stack || error) );
 });
 
 function parseArgv( argv ) {
