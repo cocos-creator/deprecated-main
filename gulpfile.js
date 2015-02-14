@@ -123,7 +123,6 @@ function task_build_publish_js(templateVersion, editorVersion) {
                          .pipe(concat('blabla.js'));
         for (var i = 0, dests = paths.build_publish['dest_' + templateVersion]; i < dests.length; i++) {
             var dest = Path.join('bin', editorVersion, build_base, 'platforms', dests[i]);
-            console.log("dest path: " + dest);
             stream = stream.pipe(rename(Path.basename(dest))).pipe(gulp.dest('bin'));
             if (templateVersion === 'min') {
                 stream = stream.pipe(uglifyjs());
