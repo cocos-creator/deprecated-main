@@ -9,7 +9,7 @@ var Nomnom = require('nomnom');
 var Chalk = require('chalk');
 
 // set global values
-global.FIRE_VER = "0.1.3";
+global.FIRE_VER = "0.1.4";
 global.FIRE_PATH = __dirname;
 global.FIRE_DATA_PATH = App.getPath('userData');
 global.FIRE_PROJECT_PATH = "";  // will be init in Fireball.open
