@@ -191,7 +191,7 @@ function start() {
         if ( !_options.dev ) {
             var crashReporter = require('crash-reporter');
             crashReporter.start({
-                productName: 'Fireball-x',
+                productName: 'Fireball',
                 companyName: 'FireBox',
                 submitUrl: 'https://fireball-x.im/crash-report',
                 autoSubmit: false,
@@ -209,7 +209,7 @@ function start() {
     App.on('ready', function() {
         registerProtocol();
         initFireApp();
-        Fire.info("Welcome to Fireball-x! The next-gen html5 game engine.");
+        Fire.info("Welcome to Fireball! The next-gen html5 game engine.");
 
         // check if project valid
         try {

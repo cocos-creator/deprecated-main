@@ -92,7 +92,7 @@ function getUserHome () {
     return process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME'];
 }
 
-paths.globalPluginDir = Path.join(getUserHome(), '.fireball-x');
+paths.globalPluginDir = Path.join(getUserHome(), '.fireball');
 paths.builtinPluginDir = Path.resolve('builtin');
 
 opts.compileGlobalPlugin = false;
