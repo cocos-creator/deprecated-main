@@ -123,18 +123,19 @@ function (done) {
 });
 
 // build html
-function buildAndCopyWeb(src, callback) {
+function buildAndCopyWeb(src, options, callback) {
     return gulp.src(src)
         .pipe(es.through(function write(file) {
             if (Path.extname(file.path) === '.html') {
                 console.log('generating html from ' + file.path);
                 var data = {
                     file: file,
-                    project: Path.basename(proj),
-                    width: 800,
-                    height: 600,
+                    project: Path.basename(proj)
                 };
-                file.contents = new Buffer(gutil.template(file.contents, data))
+                for (var opt in options) {
+                    data[opt] = options[opt];
+                }
+                file.contents = new Buffer(gutil.template(file.contents, data));
             }
             this.emit('data', file);
         }))
@@ -149,7 +150,10 @@ gulp.task(BUILD_ + 'web-desktop',[
     'build-resources',
     'build-settings'
 ], function (done) {
-    buildAndCopyWeb(paths.template_web_desktop, done);
+    buildAndCopyWeb(paths.template_web_desktop, {
+        width: 800,
+        height: 600
+    }, done);
     //var path = Path.join(dest, Path.basename(paths.web_template_desktop));
     //new gutil.File({
     //    contents: _generateRunnerContents(template, lib_dev.concat(fileList), dest, title),
@@ -165,7 +169,10 @@ gulp.task(BUILD_ + 'web-mobile',[
     'build-resources',
     'build-settings'
 ], function (done) {
-    buildAndCopyWeb(paths.template_web_mobile, done);
+    buildAndCopyWeb(paths.template_web_mobile, {
+        width: 400,
+        height: 666
+    }, done);
 });
 
 // default
