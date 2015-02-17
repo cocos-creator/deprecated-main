@@ -21,26 +21,27 @@ Nomnom.script('gulp --gulpfile gulp-build.js');
 Nomnom.option('project', {
     string: '-p PROJECT, --project=PROJECT',
     help: 'the project to build',
-    required: true,
+    required: true
 });
 Nomnom.option('platform', {
     string: '--platform=PLATFORM',
     help: 'the target platform to build',
-    required: true,
+    required: true
 });
 Nomnom.option('dest', {
     string: '--dest=DEST',
     help: 'the path for the output files',
-    required: true,
+    required: true
 });
 Nomnom.option('debug', {
     string: '-d, --debug',
     help: 'development build',
-    flag: true,
+    default: false,
+    flag: true
 });
 // 这是一个临时参数，之后会从 project settings 读取
 Nomnom.option('scene', {
-    string: '--launch-scene=UUID',
+    string: '--launch-scene=UUID'
 });
 
 var opts = Nomnom.parse();
@@ -68,7 +69,7 @@ var paths = {
         debug ? 'ext/pixi/bin/pixi.dev.js' : 'ext/pixi/bin/pixi.js',
     ],
     res: Path.join(dest, 'resource'),
-    settings: Path.join(dest, 'settings.json'),
+    settings: Path.join(dest, 'settings.json')
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -117,8 +118,8 @@ gulp.task('build-settings', [
 ],
 function (done) {
     var settings = {
-        scenes: [opts.scene],
-    }
+        scenes: [opts.scene]
+    };
     fs.writeFile(paths.settings, JSON.stringify(settings), done);
 });
 
