@@ -16,10 +16,7 @@
     Fire.AssetLibrary.init('resource/library');
     // load scene
     loadProjectSettings(function (project) {
-        Fire.Engine.loadScene(project.scenes[0],
-            function () {
-                Fire.Engine._scene.camera.size = 800;
-            },
+        Fire.Engine.loadScene(project.scenes[0], null,
             function () {
                 Fire.Engine.play();
             }
