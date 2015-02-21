@@ -140,7 +140,7 @@ function initFireApp () {
 
     // load Fire core module
     global.Fire = require('./src/core/core');
-    global.Fire = Fire.mixin( global.Fire,
+    global.Fire = Fire.JS.mixin( global.Fire,
                              require('./src/editor-share/editor-share')
                             );
     global.Fire.url = fireurl;
