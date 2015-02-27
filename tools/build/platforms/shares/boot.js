@@ -1,6 +1,6 @@
 ﻿;window.onload = function () {
     function loadProjectSettings (callback) {
-        Fire._JsonLoader('settings.json', function (json, error) {
+        Fire._JsonLoader('settings.json', function (error, json) {
             if (error) {
                 Fire.error(error);
             }
