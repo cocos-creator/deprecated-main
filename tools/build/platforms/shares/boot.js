@@ -16,7 +16,7 @@
     Fire.AssetLibrary.init('resource/library');
     // load scene
     loadProjectSettings(function (project) {
-        Fire.Engine.loadScene(project.scenes[0], null,
+        Fire.Engine._loadSceneByUuid(project.scenes[0], null,
             function () {
                 Fire.Engine.play();
             }
