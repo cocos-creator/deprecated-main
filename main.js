@@ -7,6 +7,7 @@ var Fs = require('fire-fs');
 var Url = require('fire-url');
 var Nomnom = require('nomnom');
 var Chalk = require('chalk');
+var Winston = require('winston');
 
 // set global values
 global.FIRE_VER = "0.1.4";
@@ -17,12 +18,121 @@ global.Fire = {};
 
 var _options = {};
 
+// get log path
+var _logpath = '';
+if ( process.platform === 'darwin' ) {
+    _logpath = Path.join(App.getPath('home'), 'Library/Logs/Fireball' );
+}
+else {
+    _logpath = App.getPath('appData');
+}
+
 // this will prevent default atom-shell uncaughtException
 process.removeAllListeners('uncaughtException');
 process.on('uncaughtException', function(error) {
-    console.error( Chalk.red.inverse.bold('Uncaught Exception:') + ' ' + Chalk.red(error.stack || error) );
+    Winston.uncaught( error.stack || error );
 });
 
+// initialize logs
+if ( !Fs.existsSync(_logpath) ) {
+    Fs.makeTreeSync(_logpath);
+}
+
+var _logfile = Path.join(_logpath, 'fireball.log');
+if ( Fs.existsSync(_logfile) ) {
+    Fs.unlinkSync(_logfile);
+}
+
+var winstonLevels = {
+    normal   : 0,
+    success  : 1,
+    failed   : 2,
+    info     : 3,
+    warn     : 4,
+    error    : 5,
+    fatal    : 6,
+    uncaught : 7,
+};
+Winston.setLevels(winstonLevels);
+
+Winston.remove(Winston.transports.Console);
+Winston.add(Winston.transports.File, {
+    level: 'normal',
+    filename: _logfile,
+    json: false,
+});
+
+var chalk_id = Chalk.bgBlue;
+var chalk_success = Chalk.green;
+var chalk_warn = Chalk.yellow;
+var chalk_error = Chalk.red;
+var chalk_info = Chalk.cyan;
+
+var levelToFormat = {
+    normal: function ( text ) {
+        var pid = chalk_id("[" + process.pid + "]") + " ";
+        return pid + text;
+    },
+
+    success: function ( text ) {
+        var pid = chalk_id("[" + process.pid + "]") + " ";
+        return pid + chalk_success(text);
+    },
+
+    failed: function ( text ) {
+        var pid = chalk_id("[" + process.pid + "]") + " ";
+        return pid + chalk_error(text);
+    },
+
+    info: function ( text ) {
+        var pid = chalk_id("[" + process.pid + "]") + " ";
+        return pid + chalk_info(text);
+    },
+
+    warn: function ( text ) {
+        var pid = chalk_id("[" + process.pid + "]") + " ";
+        return pid + chalk_warn.inverse.bold('Warning:') + ' ' + chalk_warn(text);
+    },
+
+    error: function ( text ) {
+        var pid = chalk_id("[" + process.pid + "]") + " ";
+        return pid + chalk_error.inverse.bold('Error:') + ' ' + chalk_error(text);
+    },
+
+    fatal: function ( text ) {
+        var pid = chalk_id("[" + process.pid + "]") + " ";
+        return pid + chalk_error.inverse.bold('Fatal Error:') + ' ' + chalk_error(text);
+    },
+
+    uncaught: function ( text ) {
+        var pid = chalk_id("[" + process.pid + "]") + " ";
+        return pid + chalk_error.inverse.bold('Uncaught Exception:') + ' ' + chalk_error(text);
+    },
+};
+
+Winston.add( Winston.transports.Console, {
+    level: 'normal',
+    formatter: function (options) {
+        var pid = chalk_id("[" + process.pid + "]") + " ";
+        var text = "";
+        if ( options.message !== undefined ) {
+            text += options.message;
+        }
+        if ( options.meta && Object.keys(options.meta).length ) {
+            text += " " + JSON.stringify(options.meta);
+        }
+
+        // output log by different level
+        var formatter = levelToFormat[options.level];
+        if ( formatter ) {
+            return formatter(text);
+        }
+
+        return text;
+    }
+});
+
+//
 function parseArgv( argv ) {
     Nomnom
     .script("fire")
@@ -80,7 +190,7 @@ function saveProfile () {
 }
 
 function registerProtocol () {
-    console.log( 'Register protocol' );
+    Winston.normal( 'Register protocol' );
 
     // register protocol
     var Protocol = require('protocol');
@@ -136,7 +246,7 @@ function registerProtocol () {
 }
 
 function initFireApp () {
-    console.log( 'Initializing Fire' );
+    Winston.normal( 'Initializing Fire' );
 
     // load Fire core module
     global.Fire = require('./src/core/core');
@@ -145,10 +255,9 @@ function initFireApp () {
                             );
     global.Fire.url = fireurl;
     global.Fire.saveProfile = saveProfile;
-    global.Fire.Console = require( Fire.url('editor-core://fire-console') );
 
     // load user profile
-    console.log( 'Loading user profile' );
+    Winston.normal( 'Loading user profile' );
     var profilePath = Path.join(FIRE_DATA_PATH,'profile.json');
     if ( !Fs.existsSync(profilePath) ) {
         Fire.userProfile = {
@@ -223,7 +332,7 @@ function start() {
             }
         }
         catch ( error ) {
-            Fire.Console.error(error.stack || error);
+            Winston.error(error.stack || error);
             App.terminate();
         }
     });
