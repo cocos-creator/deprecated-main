@@ -30,6 +30,7 @@ var paths = {
     ],
     static: [
         'static/**/*',
+        'templates/**/*',
     ],
     build_publish: {
         src_min: ['../core/bin/core.player.js', '../engine/bin/engine.player.js'],
@@ -179,17 +180,17 @@ gulp.task('build-publish-min', [
     task_copy_shares('min', 'min'),
 ]);
 
-// static-dev
+// static-files-dev
 gulp.task('static-dev', ['build-publish-dev'], function() {
-    return gulp.src(paths.static)
-    .pipe(gulp.dest('bin/dev/static'))
+    return gulp.src(paths.static, {base: './'})
+    .pipe(gulp.dest('bin/dev/'))
     ;
 });
 
-// static-min
+// static-files-min
 gulp.task('static-min', ['build-publish-min'], function() {
-    return gulp.src(paths.static)
-    .pipe(gulp.dest('bin/min/static'))
+    return gulp.src(paths.static, {base: './'})
+    .pipe(gulp.dest('bin/min/'))
     ;
 });
 
