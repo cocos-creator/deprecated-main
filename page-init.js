@@ -36,6 +36,13 @@ try {
             document.body.scrollTop = 0;
         };
     };
+
+    window.onerror = function ( message, filename, lineno, colno, error ) {
+        Fire.sendToPages('console:error', message);
+
+        // Just let default handler run.
+        return false;
+    };
 }
 catch ( error ) {
     window.onload = function () {

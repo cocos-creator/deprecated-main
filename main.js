@@ -30,6 +30,7 @@ else {
 // this will prevent default atom-shell uncaughtException
 process.removeAllListeners('uncaughtException');
 process.on('uncaughtException', function(error) {
+    Fire.sendToPages('console:error', error.stack || error);
     Winston.uncaught( error.stack || error );
 });
 
