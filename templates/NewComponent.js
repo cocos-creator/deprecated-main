@@ -1,11 +1,11 @@
 var Comp = Fire.extend(Fire.Component);
 
-// use onStart for initialiization
+// use this for initialization
 Comp.prototype.onStart = function () {
 
 };
 
-// update is called once per frame
+// called every frame
 Comp.prototype.update = function () {
 
 };
