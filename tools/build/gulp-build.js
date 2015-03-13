@@ -1,9 +1,9 @@
 ﻿var Path = require('path');
-var fs = require('fs');
-
+var fs = require('fire-fs');
+var os = require('os');
 var gulp = require('gulp');
 var gutil = require('gulp-util');
-//var del = require('del');
+var del = require('del');
 var es = require('event-stream');
 
 var Nomnom = require('nomnom');
@@ -185,7 +185,9 @@ gulp.task(BUILD_ + 'web-desktop',[
     buildAndCopyWeb(paths.template_web_desktop, {
         width: 800,
         height: 600
-    }, done);
+    }, function() {
+        gulp.start('make-server', done);
+    });
     //var path = Path.join(dest, Path.basename(paths.web_template_desktop));
     //new gutil.File({
     //    contents: _generateRunnerContents(template, lib_dev.concat(fileList), dest, title),
@@ -204,7 +206,9 @@ gulp.task(BUILD_ + 'web-mobile',[
     buildAndCopyWeb(paths.template_web_mobile, {
         width: 400,
         height: 666
-    }, done);
+    }, function() {
+        gulp.start('make-server', done);
+    });
 });
 
 // default
@@ -229,3 +233,46 @@ else {
     console.error('Not support %s platform, available platform currently: %s', platform, availables);
     process.exit(1);
 }
+
+/////////////////////////////////////////////////////////////////////////////
+// make server
+/////////////////////////////////////////////////////////////////////////////
+
+gulp.task('clean-server', function(cb) {
+    var basePath = Path.join(os.tmpdir(), 'fireball-game-builds');
+    if (fs.existsSync(basePath)) {
+        del(basePath, { force: true }, cb);
+    } else {
+        cb();
+    }
+});
+
+gulp.task('make-server', ['clean-server'], function() {
+    var basePath = Path.join(os.tmpdir(), 'fireball-game-builds');
+    console.log('server built to: ' + basePath);
+    var stream = es.merge(
+        gulp.src('node_modules/express/**/*', { base: '.'})
+            .pipe(gulp.dest(basePath)),
+        gulp.src('tools/build/preview-server.js', { base: 'tools/build'})
+            .pipe(gulp.dest(basePath)),
+        gulp.src(dest + '/**/*')
+            .pipe(gulp.dest(basePath + '/public'))
+    );
+    return stream;
+});
+
+gulp.task('run-server', ['make-server'], function(cb) {
+    var spawn = require('child_process').spawn;
+    var child = spawn(Path.join('node_modules', 'node', 'node'), [Path.join(os.tmpdir(), 'fireball-game-builds', 'preview-server.js')]);
+    child.stdout.on('data', function(data) {
+        console.log(data.toString('utf8'));
+       if (data.toString('utf8').indexOf('localhost') !== -1) {
+           //TODO: add open url 'localhost:3000' in browser here
+           cb();
+       }
+    });
+    child.stderr.on('data', function(data) {
+        console.log(data.toString());
+        process.exit(1);
+    });
+});
