@@ -249,30 +249,8 @@ gulp.task('clean-server', function(cb) {
 
 gulp.task('make-server', ['clean-server'], function() {
     var basePath = Path.join(os.tmpdir(), 'fireball-game-builds');
-    console.log('server built to: ' + basePath);
-    var stream = es.merge(
-        gulp.src('node_modules/express/**/*', { base: '.'})
-            .pipe(gulp.dest(basePath)),
-        gulp.src('tools/build/preview-server.js', { base: 'tools/build'})
-            .pipe(gulp.dest(basePath)),
-        gulp.src(dest + '/**/*')
-            .pipe(gulp.dest(basePath + '/public'))
-    );
-    return stream;
+    console.log('built files copying to: ' + basePath);
+    return gulp.src(dest + '/**/*')
+        .pipe(gulp.dest(basePath));
 });
 
-gulp.task('run-server', ['make-server'], function(cb) {
-    var spawn = require('child_process').spawn;
-    var child = spawn(Path.join('node_modules', 'node', 'node'), [Path.join(os.tmpdir(), 'fireball-game-builds', 'preview-server.js')]);
-    child.stdout.on('data', function(data) {
-        console.log(data.toString('utf8'));
-       if (data.toString('utf8').indexOf('localhost') !== -1) {
-           //TODO: add open url 'localhost:3000' in browser here
-           cb();
-       }
-    });
-    child.stderr.on('data', function(data) {
-        console.log(data.toString());
-        process.exit(1);
-    });
-});

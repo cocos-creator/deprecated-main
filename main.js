@@ -320,6 +320,8 @@ function start() {
         registerProtocol();
         initFireApp();
         Fire.info("Welcome to Fireball! The next-gen html5 game engine.");
+        //start running game build preview server
+        startPreviewServer();
 
         // check if project valid
         try {
@@ -336,6 +338,27 @@ function start() {
             Winston.error(error.stack || error);
             App.terminate();
         }
+    });
+}
+
+function startPreviewServer() {
+    //var child_process = require('child_process');
+    //previewServerProcess = child_process.execFile('./tools/build/preview-server.js', function() {
+    //    console.log('server started');
+    //});
+    var express = require('express');
+    var app = express();
+    var os = require('os');
+    var del = require('del');
+    var buildPath = Path.join(os.tmpdir(),'fireball-game-builds');
+    del(Path.join(buildPath + '**/*'), {force: true}, function() {
+        app.use(express.static(buildPath));
+        app.get('/', function(req, res) {
+            res.send('Please build your game project and play it here!');
+        });
+        var server = app.listen(7456, function () {
+            console.log('preview server running at http://localhost:7456');
+        });
     });
 }
 
