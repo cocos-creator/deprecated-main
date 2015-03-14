@@ -39,12 +39,15 @@ Nomnom.option('debug', {
     default: false,
     flag: true
 });
-// 这是一个临时参数，之后会从 project settings 读取
-Nomnom.option('scene', {
-    string: '--launch-scene=UUID'
+Nomnom.option('scenes', {
+    string: '--scenes=UUID',
+    help: 'the list of scene\'s uuid to build',
+    //list: true
 });
 
 var opts = Nomnom.parse();
+opts.scenes = opts.scenes.split(' ');
+
 var proj = opts.project;
 var platform = opts.platform;
 var dest = opts.dest;
@@ -55,6 +58,7 @@ console.log('Building ' + proj);
 
 dest = Path.resolve(dest);
 console.log('Destination ' + dest);
+//console.log('Scenes ' + opts.scenes);
 
 /////////////////////////////////////////////////////////////////////////////
 // configs
@@ -118,7 +122,7 @@ gulp.task('build-settings', [
 ],
 function (done) {
     var settings = {
-        scenes: [opts.scene]
+        scenes: opts.scenes
     };
     fs.writeFile(paths.settings, JSON.stringify(settings), done);
 });
