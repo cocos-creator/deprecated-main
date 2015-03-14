@@ -186,7 +186,7 @@ gulp.task(BUILD_ + 'web-desktop',[
         width: 800,
         height: 600
     }, function() {
-        gulp.start('make-server', done);
+        gulp.start('copy-built-target', done);
     });
     //var path = Path.join(dest, Path.basename(paths.web_template_desktop));
     //new gutil.File({
@@ -207,7 +207,7 @@ gulp.task(BUILD_ + 'web-mobile',[
         width: 400,
         height: 666
     }, function() {
-        gulp.start('make-server', done);
+        gulp.start('copy-built-target', done);
     });
 });
 
@@ -238,7 +238,7 @@ else {
 // make server
 /////////////////////////////////////////////////////////////////////////////
 
-gulp.task('clean-server', function(cb) {
+gulp.task('clean-built-target', function(cb) {
     var basePath = Path.join(os.tmpdir(), 'fireball-game-builds');
     if (fs.existsSync(basePath)) {
         del(basePath, { force: true }, cb);
@@ -247,7 +247,7 @@ gulp.task('clean-server', function(cb) {
     }
 });
 
-gulp.task('make-server', ['clean-server'], function() {
+gulp.task('copy-built-target', ['clean-built-target'], function() {
     var basePath = Path.join(os.tmpdir(), 'fireball-game-builds');
     console.log('built files copying to: ' + basePath);
     return gulp.src(dest + '/**/*')
