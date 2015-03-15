@@ -46,7 +46,9 @@ Nomnom.option('scenes', {
 });
 
 var opts = Nomnom.parse();
-opts.scenes = opts.scenes.split(' ');
+opts.scenes = opts.scenes.split(' ').map(function (x) {
+    return x.replace(/"/g, '');
+});
 
 var proj = opts.project;
 var platform = opts.platform;
@@ -118,14 +120,39 @@ gulp.task('build-resources', function () {
 
 // build project settings
 gulp.task('build-settings', [
-    'copy-deps',    // wait until dest folder created
-],
-function (done) {
-    var settings = {
-        scenes: opts.scenes
-    };
-    fs.writeFile(paths.settings, JSON.stringify(settings), done);
-});
+        'copy-deps',    // wait until dest folder created
+    ],
+    function (done) {
+        var scenes = opts.scenes;
+        var launchScene = scenes[0];
+        launchScene = Path.basename(launchScene, Path.extname(launchScene));
+        var settings = {
+            scenes: {},
+            launchScene: launchScene
+        };
+        // read uuid
+        var pending = scenes.length;
+        for (var i = 0; i < scenes.length; i++) {
+            var path = scenes[i];
+            var sceneName = Path.basename(path, Path.extname(path));
+            fs.readFile(Path.join(proj, path + ".meta"), function (sceneName, err, buf) {
+                if (err) {
+                    console.error(err);
+                    process.exit(1);
+                    return;
+                }
+                var meta = JSON.parse(buf);
+                settings.scenes[sceneName] = meta.uuid;
+                --pending;
+
+                if (pending === 0) {
+                    // write config
+                    fs.writeFile(paths.settings, JSON.stringify(settings), done);
+                }
+            }.bind(this, sceneName));
+        }
+    }
+);
 
 // build html
 function buildAndCopyWeb(src, options, callback) {
