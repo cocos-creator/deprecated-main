@@ -1,9 +1,9 @@
 ﻿var Path = require('path');
-var fs = require('fs');
-
+var fs = require('fire-fs');
+var os = require('os');
 var gulp = require('gulp');
 var gutil = require('gulp-util');
-//var del = require('del');
+var del = require('del');
 var es = require('event-stream');
 
 var Nomnom = require('nomnom');
@@ -185,7 +185,9 @@ gulp.task(BUILD_ + 'web-desktop',[
     buildAndCopyWeb(paths.template_web_desktop, {
         width: 800,
         height: 600
-    }, done);
+    }, function() {
+        gulp.start('copy-built-target', done);
+    });
     //var path = Path.join(dest, Path.basename(paths.web_template_desktop));
     //new gutil.File({
     //    contents: _generateRunnerContents(template, lib_dev.concat(fileList), dest, title),
@@ -204,7 +206,9 @@ gulp.task(BUILD_ + 'web-mobile',[
     buildAndCopyWeb(paths.template_web_mobile, {
         width: 400,
         height: 666
-    }, done);
+    }, function() {
+        gulp.start('copy-built-target', done);
+    });
 });
 
 // default
@@ -229,3 +233,24 @@ else {
     console.error('Not support %s platform, available platform currently: %s', platform, availables);
     process.exit(1);
 }
+
+/////////////////////////////////////////////////////////////////////////////
+// make server
+/////////////////////////////////////////////////////////////////////////////
+
+gulp.task('clean-built-target', function(cb) {
+    var basePath = Path.join(os.tmpdir(), 'fireball-game-builds');
+    if (fs.existsSync(basePath)) {
+        del(basePath, { force: true }, cb);
+    } else {
+        cb();
+    }
+});
+
+gulp.task('copy-built-target', ['clean-built-target'], function() {
+    var basePath = Path.join(os.tmpdir(), 'fireball-game-builds');
+    console.log('built files copying to: ' + basePath);
+    return gulp.src(dest + '/**/*')
+        .pipe(gulp.dest(basePath));
+});
+
