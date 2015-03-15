@@ -320,8 +320,6 @@ function start() {
         registerProtocol();
         initFireApp();
         Fire.info("Welcome to Fireball! The next-gen html5 game engine.");
-        //start running game build preview server
-        startPreviewServer();
 
         // check if project valid
         try {
@@ -339,11 +337,6 @@ function start() {
             App.terminate();
         }
     });
-}
-
-function startPreviewServer() {
-    var server = require('./tools/build/preview-server');
-    server.start();
 }
 
 // starts the app
