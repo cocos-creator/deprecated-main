@@ -249,11 +249,11 @@ function registerProtocol () {
 function initFireApp () {
     Winston.normal( 'Initializing Fire' );
 
-    // load Fire core module
+    // load Fire module
     global.Fire = require('./src/core/core');
-    global.Fire = Fire.JS.mixin( global.Fire,
-                             require('./src/editor-share/editor-share')
-                            );
+    //Fire.JS.mixin( global.Fire, require('./src/engine/engine.editor-core'));
+    Fire.JS.mixin( global.Fire, require('./src/editor-share/editor-share'));
+
     global.Fire.url = fireurl;
     global.Fire.saveProfile = saveProfile;
 
