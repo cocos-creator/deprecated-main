@@ -9,7 +9,7 @@
             sendToCore: function ( message ) {
                 'use strict';
                 var args = [].slice.call( arguments );
-                ipc.send.apply( ipc, ['send2core'].concat( args ) );
+                ipc.send.apply( ipc, ['fire:send2core'].concat( args ) );
             },
         };
     </script>
