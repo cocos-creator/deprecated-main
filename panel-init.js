@@ -13,13 +13,14 @@ Fire.sendRequestToCore( 'panel:query-info', Fire.argv.panelID,
                         Fire.argv.panelID,
                         panelInfo,
                         function ( err, element ) {
+                            element.argv = argv;
+
                             if ( panelInfo.type === "dockable" ) {
                                 var dock = new FireDock();
                                 dock.setAttribute('fit', '');
                                 dock.setAttribute('no-collapse', '');
 
                                 var panel = new FirePanel();
-
                                 panel.add(element);
                                 dock.appendChild(panel);
                                 document.body.appendChild(dock);
