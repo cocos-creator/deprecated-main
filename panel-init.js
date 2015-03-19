@@ -1,8 +1,8 @@
 // NOTE: there are two way to initialize a panel,
-// panel:query-info happends when a panel open in a new window
+// panel:ready happends when a panel open in a new window
 // panel:open happends when a panel open in a exists window
 
-Fire.sendRequestToCore( 'panel:query-info', Fire.argv.panelID,
+Fire.sendRequestToCore( 'panel:ready', Fire.argv.panelID,
                         function ( results ) {
     var panelInfo = results.panelInfo;
     var packagePath = results.packagePath;
@@ -31,12 +31,6 @@ Fire.sendRequestToCore( 'panel:query-info', Fire.argv.panelID,
                         } );
 } );
 
-var Ipc = require('ipc');
-Ipc.on( 'panel:open', function ( results ) {
-    var panelID = results.panelID;
-    var panelInfo = results.panelInfo;
-    var path = results.packagePath;
-    var argv = results.argv;
-
-    // TODO:
-});
+window.onbeforeunload = function ( event ) {
+    Fire.PanelMng.closeAll();
+};
