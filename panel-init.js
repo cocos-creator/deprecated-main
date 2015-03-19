@@ -30,7 +30,3 @@ Fire.sendRequestToCore( 'panel:ready', Fire.argv.panelID,
                             }
                         } );
 } );
-
-window.onbeforeunload = function ( event ) {
-    Fire.PanelMng.closeAll();
-};
