@@ -25,6 +25,13 @@
         var launchUuid = settings.scenes[settings.launchScene];
         Fire.Engine._loadSceneByUuid(launchUuid, null,
             function () {
+                // show canvas
+                canvas.style.visibility = '';
+                var div = document.getElementById('GameDiv');
+                if (div) {
+                    div.style.backgroundImage = '';
+                }
+                // play game
                 Fire.Engine.play();
             }
         );
