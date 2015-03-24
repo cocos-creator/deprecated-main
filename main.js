@@ -12,7 +12,8 @@ var Winston = require('winston');
 // set global values
 global.FIRE_VER = "0.1.6";
 global.FIRE_PATH = __dirname;
-global.FIRE_DATA_PATH = App.getPath('userData');
+// DISABLE: global.FIRE_DATA_PATH = App.getPath('userData');
+global.FIRE_DATA_PATH = Path.join( App.getPath('home'), '.fireball' );
 global.FIRE_PROJECT_PATH = "";  // will be init in Fireball.open
 global.Fire = {};
 
@@ -30,9 +31,15 @@ else {
 // this will prevent default atom-shell uncaughtException
 process.removeAllListeners('uncaughtException');
 process.on('uncaughtException', function(error) {
-    Fire.sendToWindows('console:error', error.stack || error);
+    if ( Fire.sendToWindows )
+        Fire.sendToWindows('console:error', error.stack || error);
     Winston.uncaught( error.stack || error );
 });
+
+// initialize ~/.fireball
+if ( !Fs.existsSync(global.FIRE_DATA_PATH) ) {
+    Fs.makeTreeSync(global.FIRE_DATA_PATH);
+}
 
 // initialize logs
 if ( !Fs.existsSync(_logpath) ) {
@@ -157,13 +164,15 @@ function parseArgv( argv ) {
         else {
             opts.project = opts._[opts._.length-1];
         }
-        global.FIRE_DATA_PATH = __dirname;
+
+        // DEBUG? I think debug could redirect the data-path
+        // global.FIRE_DATA_PATH = __dirname;
     }
 
     return opts;
 }
 
-function fireurl ( url ) {
+function _fireurl ( url ) {
     var data = Url.parse(url);
     var relativePath = '';
 
@@ -184,10 +193,58 @@ function fireurl ( url ) {
     }
 }
 
-function saveProfile () {
-    // create default user profile.
-    var profilePath = Path.join(FIRE_DATA_PATH,'profile.json');
-    Fs.writeFileSync(profilePath, JSON.stringify(Fire.userProfile, null, 4));
+function _getProfilePath ( name, type ) {
+    if ( type === 'global' ) {
+        return Path.join( FIRE_DATA_PATH, name + '.json' );
+    }
+    else if ( type === 'project' ) {
+        return Path.join( FIRE_PROJECT_PATH, 'settings', name + '.json' );
+    }
+    else if ( type === 'local' ) {
+        return Path.join( FIRE_PROJECT_PATH, 'local', name + '.json' );
+    }
+
+    return '';
+}
+
+// type: global, local, project
+function _saveProfile ( name, type, obj ) {
+    var path = _getProfilePath( name, type );
+    var json = JSON.stringify(obj, null, 2);
+    Fs.writeFile(path, json, 'utf8', function ( err ) {
+        if ( err ) {
+            Fire.error( err );
+        }
+    });
+}
+
+// type: global, local, project
+function _loadProfile ( name, type, defaultProfile ) {
+    var profileProto = {
+        save: function () {
+            _saveProfile( name, type, this );
+        }
+    };
+
+    var path = _getProfilePath( name, type );
+    var profile = defaultProfile;
+
+    if ( !Fs.existsSync(path) ) {
+        Fs.writeFileSync(path, JSON.stringify(profile, null, 2));
+    }
+    else {
+        try {
+            profile = JSON.parse(Fs.readFileSync(path));
+        }
+        catch ( err ) {
+            if ( err ) {
+                Fire.warn( 'Failed to load profile %s, error message: %s', name, err.message );
+                profile = {};
+            }
+        }
+    }
+
+    return Fire.JS.mixin( profile, profileProto );
 }
 
 function registerProtocol () {
@@ -254,22 +311,14 @@ function initFireApp () {
     //Fire.JS.mixin( global.Fire, require('./src/engine/engine.editor-core'));
     Fire.JS.mixin( global.Fire, require('./src/editor-share/editor-share'));
 
-    global.Fire.url = fireurl;
-    global.Fire.saveProfile = saveProfile;
+    global.Fire.url = _fireurl;
+    global.Fire.loadProfile = _loadProfile;
+    global.Fire.profiles = {};
 
-    // load user profile
-    Winston.normal( 'Loading user profile' );
-    var profilePath = Path.join(FIRE_DATA_PATH,'profile.json');
-    if ( !Fs.existsSync(profilePath) ) {
-        Fire.userProfile = {
-            recentlyOpened: [],
-        };
-        // create default user profile.
-        Fs.writeFileSync(profilePath, JSON.stringify(Fire.userProfile, null, 4));
-    }
-    else {
-        Fire.userProfile = JSON.parse(Fs.readFileSync(profilePath));
-    }
+    // load ~/.fireball/fireball.json
+    Fire.profiles.fireball = _loadProfile( 'fireball', 'global', {
+        recentlyOpened: [],
+    });
 
     //
     var FireApp = require( Fire.url('editor-core://fire-app') );
@@ -279,9 +328,6 @@ function initFireApp () {
 function start() {
     // parse process arguments
     _options = parseArgv( process.argv.slice(1) );
-
-    // TODO: check if exists
-    // if ( FIRE_DATA_PATH )
 
     // quit when all windows are closed.
     App.on('window-all-closed', function( event ) {
