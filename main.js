@@ -227,7 +227,7 @@ function _loadProfile ( name, type, defaultProfile ) {
     };
 
     var path = _getProfilePath( name, type );
-    var profile = defaultProfile;
+    var profile = defaultProfile || {};
 
     if ( !Fs.existsSync(path) ) {
         Fs.writeFileSync(path, JSON.stringify(profile, null, 2));
