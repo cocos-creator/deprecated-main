@@ -38,7 +38,11 @@ try {
     };
 
     window.onerror = function ( message, filename, lineno, colno, error ) {
-        Fire.sendToWindows('console:error', message);
+        if (Fire && Fire.sendToWindows) {
+            Fire.sendToWindows('console:error', message);
+        } else {
+            console.error(message);
+        }
 
         // Just let default handler run.
         return false;

@@ -23,6 +23,9 @@ var paths = {
     panel_init_js: [
         'panel-init.js',
     ],
+    metrics_js: [
+        'metrics.js'
+    ],
     launch_css: [
         'launch.styl'
     ],
@@ -94,6 +97,7 @@ var task_js = function ( name ) {
 task_js('main');
 task_js('page_init_js');
 task_js('panel_init_js');
+task_js('metrics_js');
 
 // launch-css-dev
 gulp.task( 'launch_css-dev', function() {
@@ -228,6 +232,7 @@ gulp.task('watch', function() {
     gulp.watch(paths.main, ['main-dev']).on( 'error', gutil.log );
     gulp.watch(paths.page_init_js, ['page_init_js-dev']).on( 'error', gutil.log );
     gulp.watch(paths.panel_init_js, ['panel_init_js-dev']).on( 'error', gutil.log );
+    gulp.watch(paths.metrics_js, ['metrics_js-dev']).on('error', gutil.log);
     gulp.watch(paths.launch_css, ['launch_css-dev']).on( 'error', gutil.log );
     gulp.watch(paths.static, ['static-dev']).on( 'error', gutil.log );
     gulp.watch(paths.tools, ['tools-dev']).on( 'error', gutil.log );
@@ -240,7 +245,7 @@ gulp.task('watch', function() {
     }
 });
 
-gulp.task('dev', ['main-dev', 'page_init_js-dev', 'panel_init_js-dev', 'launch_css-dev', 'static-dev', 'tools-dev', 'build-publish-dev'] );
-gulp.task('min', ['main-min', 'page_init_js-min', 'panel_init_js-min', 'launch_css-min', 'static-min', 'tools-min', 'build-publish-min'] );
+gulp.task('dev', ['main-dev', 'page_init_js-dev', 'metrics_js-dev', 'panel_init_js-dev', 'launch_css-dev', 'static-dev', 'tools-dev', 'build-publish-dev'] );
+gulp.task('min', ['main-min', 'page_init_js-min', 'metrics_js-min', 'panel_init_js-min', 'launch_css-min', 'static-min', 'tools-min', 'build-publish-min'] );
 gulp.task('default',['copy-min']);
 gulp.task('all', ['default'] );
