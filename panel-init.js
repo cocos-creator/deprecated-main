@@ -24,9 +24,16 @@ Fire.sendRequestToCore( 'panel:ready', Fire.argv.panelID,
                                 panel.add(element);
                                 dock.appendChild(panel);
                                 document.body.appendChild(dock);
+
+                                Fire.PanelMng.root = dock;
                             }
                             else {
                                 document.body.appendChild(element);
                             }
+
+                            // save layout
+                            Fire.sendToCore( 'window:save-layout',
+                                             Fire.PanelMng.getLayout(),
+                                             Fire.RequireIpcEvent );
                         } );
 } );

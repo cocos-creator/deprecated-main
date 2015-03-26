@@ -37,6 +37,12 @@ try {
         };
     };
 
+    window.onunload = function () {
+        Fire.sendToCore( 'window:save-layout',
+                         Fire.PanelMng.getLayout(),
+                         Fire.RequireIpcEvent );
+    };
+
     window.onerror = function ( message, filename, lineno, colno, error ) {
         if (Fire && Fire.sendToWindows) {
             Fire.sendToWindows('console:error', message);

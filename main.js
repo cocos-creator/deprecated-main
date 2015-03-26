@@ -223,7 +223,14 @@ function _loadProfile ( name, type, defaultProfile ) {
     var profileProto = {
         save: function () {
             _saveProfile( name, type, this );
-        }
+        },
+        clear: function () {
+            for ( var p in this ) {
+                if ( p !== 'save' && p !== 'clear' ) {
+                    delete this[p];
+                }
+            }
+        },
     };
 
     var path = _getProfilePath( name, type );
@@ -316,7 +323,7 @@ function initFireApp () {
     global.Fire.profiles = {};
 
     // load ~/.fireball/fireball.json
-    Fire.profiles.fireball = _loadProfile( 'fireball', 'global', {
+    Fire.profiles['fireball@global'] = _loadProfile( 'fireball', 'global', {
         recentlyOpened: [],
     });
 
