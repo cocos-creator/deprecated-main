@@ -48,6 +48,8 @@ Fire.sendRequestToCore( 'panel:ready', Fire.argv.panelID,
                             }
                             else {
                                 document.body.appendChild(element);
+
+                                Fire.PanelMng.root = element;
                             }
 
                             // save layout after css layouted
