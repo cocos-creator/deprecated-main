@@ -17,17 +17,6 @@ global.FIRE_DATA_PATH = Path.join( App.getPath('home'), '.fireball' );
 global.FIRE_PROJECT_PATH = "";  // will be init in Fireball.open
 global.Fire = {};
 
-var _options = {};
-
-// get log path
-var _logpath = '';
-if ( process.platform === 'darwin' ) {
-    _logpath = Path.join(App.getPath('home'), 'Library/Logs/Fireball' );
-}
-else {
-    _logpath = App.getPath('appData');
-}
-
 // this will prevent default atom-shell uncaughtException
 process.removeAllListeners('uncaughtException');
 process.on('uncaughtException', function(error) {
@@ -41,7 +30,23 @@ if ( !Fs.existsSync(global.FIRE_DATA_PATH) ) {
     Fs.makeTreeSync(global.FIRE_DATA_PATH);
 }
 
-// initialize logs
+// initialize ~/.fireball/settings/
+var settingsPath = Path.join(global.FIRE_DATA_PATH, 'settings');
+if ( !Fs.existsSync(settingsPath) ) {
+    Fs.mkdirSync(settingsPath);
+}
+
+// initialize logs/
+
+// get log path
+var _logpath = '';
+if ( process.platform === 'darwin' ) {
+    _logpath = Path.join(App.getPath('home'), 'Library/Logs/Fireball' );
+}
+else {
+    _logpath = App.getPath('appData');
+}
+
 if ( !Fs.existsSync(_logpath) ) {
     Fs.makeTreeSync(_logpath);
 }
@@ -193,9 +198,12 @@ function _fireurl ( url ) {
     }
 }
 
+
+var _profiles = {};
+
 function _getProfilePath ( name, type ) {
     if ( type === 'global' ) {
-        return Path.join( FIRE_DATA_PATH, name + '.json' );
+        return Path.join( FIRE_DATA_PATH, 'settings', name + '.json' );
     }
     else if ( type === 'project' ) {
         return Path.join( FIRE_PROJECT_PATH, 'settings', name + '.json' );
@@ -220,6 +228,11 @@ function _saveProfile ( name, type, obj ) {
 
 // type: global, local, project
 function _loadProfile ( name, type, defaultProfile ) {
+    var profile = _profiles[name+'@'+type];
+    if ( profile ) {
+        return profile;
+    }
+
     var profileProto = {
         save: function () {
             _saveProfile( name, type, this );
@@ -234,7 +247,7 @@ function _loadProfile ( name, type, defaultProfile ) {
     };
 
     var path = _getProfilePath( name, type );
-    var profile = defaultProfile || {};
+    profile = defaultProfile || {};
 
     if ( !Fs.existsSync(path) ) {
         Fs.writeFileSync(path, JSON.stringify(profile, null, 2));
@@ -320,10 +333,9 @@ function initFireApp () {
 
     global.Fire.url = _fireurl;
     global.Fire.loadProfile = _loadProfile;
-    global.Fire.profiles = {};
 
     // load ~/.fireball/fireball.json
-    Fire.profiles['fireball@global'] = _loadProfile( 'fireball', 'global', {
+    Fire.loadProfile( 'fireball', 'global', {
         recentlyOpened: [],
     });
 
@@ -334,7 +346,7 @@ function initFireApp () {
 
 function start() {
     // parse process arguments
-    _options = parseArgv( process.argv.slice(1) );
+    var options = parseArgv( process.argv.slice(1) );
 
     // quit when all windows are closed.
     App.on('window-all-closed', function( event ) {
@@ -351,7 +363,7 @@ function start() {
 
     //
     App.on('will-finish-launching', function() {
-        if ( !_options.dev ) {
+        if ( !options.dev ) {
             var crashReporter = require('crash-reporter');
             crashReporter.start({
                 productName: 'Fireball',
@@ -362,7 +374,7 @@ function start() {
         }
     });
 
-    if ( _options.disableDirectWrite ) {
+    if ( options.disableDirectWrite ) {
         App.commandLine.appendSwitch('disable-direct-write');
     }
     // DISABLE: http cache only happends afterwhile, not satisefy our demand (which need to happend immediately).
@@ -376,9 +388,9 @@ function start() {
 
         // check if project valid
         try {
-            if ( _options.project ) {
+            if ( options.project ) {
                 var Fireball = require( Fire.url('editor-core://fireball') );
-                Fireball.open(_options);
+                Fireball.open(options);
             }
             else {
                 var Dashboard = require( Fire.url('editor-core://dashboard') );
