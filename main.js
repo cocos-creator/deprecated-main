@@ -219,16 +219,13 @@ function _getProfilePath ( name, type ) {
 function _saveProfile ( name, type, obj ) {
     var path = _getProfilePath( name, type );
     var json = JSON.stringify(obj, null, 2);
-    Fs.writeFile(path, json, 'utf8', function ( err ) {
-        if ( err ) {
-            Fire.error( err );
-        }
-    });
+    Fs.writeFileSync(path, json, 'utf8');
 }
 
 // type: global, local, project
 function _loadProfile ( name, type, defaultProfile ) {
-    var profile = _profiles[name+'@'+type];
+    var id = name + '@' + type;
+    var profile = _profiles[id];
     if ( profile ) {
         return profile;
     }
@@ -264,7 +261,10 @@ function _loadProfile ( name, type, defaultProfile ) {
         }
     }
 
-    return Fire.JS.mixin( profile, profileProto );
+    profile = Fire.JS.mixin( profile, profileProto );
+    _profiles[id] = profile;
+
+    return profile;
 }
 
 function registerProtocol () {
