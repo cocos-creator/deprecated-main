@@ -1,8 +1,8 @@
 {
   "name": "Fireball",
   "version": "0.1.7",
-  "fire-shell-version": "0.21.1",
-  "atom-shell-version": "0.21.1",
+  "fire-shell-version": "0.22.1",
+  "atom-shell-version": "0.22.1",
   "description": "Fireball is the Html5 game engine for the future.",
   "homepage": "http://fireball-x.com",
   "main": "main.js",
