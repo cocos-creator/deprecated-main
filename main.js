@@ -10,7 +10,7 @@ var Chalk = require('chalk');
 var Winston = require('winston');
 
 // set global values
-global.FIRE_VER = "0.1.6";
+global.FIRE_VER = "0.1.7";
 global.FIRE_PATH = __dirname;
 // DISABLE: global.FIRE_DATA_PATH = App.getPath('userData');
 global.FIRE_DATA_PATH = Path.join( App.getPath('home'), '.fireball' );
