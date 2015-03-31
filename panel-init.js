@@ -22,24 +22,6 @@ Fire.sendRequestToCore( 'panel:ready', Fire.argv.panelID,
                                 dock.setAttribute('no-collapse', '');
 
                                 var panel = new FirePanel();
-                                if ( panelInfo.width )
-                                    panel.width = panelInfo.width;
-
-                                if ( panelInfo.height )
-                                    panel.height = panelInfo.height;
-
-                                if ( panelInfo['min-width'] )
-                                    panel['min-width'] = panelInfo['min-width'];
-
-                                if ( panelInfo['min-height'] )
-                                    panel['min-height'] = panelInfo['min-height'];
-
-                                if ( panelInfo['max-width'] )
-                                    panel['max-width'] = panelInfo['max-width'];
-
-                                if ( panelInfo['max-height'] )
-                                    panel['max-height'] = panelInfo['max-height'];
-
                                 panel.add(element);
                                 dock.appendChild(panel);
                                 document.body.appendChild(dock);
