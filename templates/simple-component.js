@@ -4,8 +4,8 @@ var Comp = Fire.Class({
     properties: {
         // foo: {
         //     default: null,
-        //     type: Fire.Entity
-        //     serializable: false
+        //     type: Fire.Entity,
+        //     serializable: false,
         //     visible: false
         // },
         // ...
