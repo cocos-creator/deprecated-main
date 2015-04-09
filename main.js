@@ -10,7 +10,6 @@ var Chalk = require('chalk');
 var Winston = require('winston');
 
 // set global values
-global.FIRE_VER = "0.1.7";
 global.FIRE_PATH = __dirname;
 // DISABLE: global.FIRE_DATA_PATH = App.getPath('userData');
 global.FIRE_DATA_PATH = Path.join( App.getPath('home'), '.fireball' );
@@ -151,7 +150,7 @@ function parseArgv( argv ) {
     .script("fire")
     .option('project', { position: 0, help: "The fireball project file." })
     .option('version', { abbr: 'v', flag: true, help: 'Print the version.',
-            callback: function () { return FIRE_VER; } })
+            callback: function () { return App.getVersion(); } })
     .option('help', { abbr: 'h', flag: true, help: 'Print this usage message.' })
     .option('dev', { abbr: 'd', flag: true, help: 'Run in development mode.' })
     .option('showDevtools', { abbr: 'D', full: 'show-devtools', flag: true, help: 'Open devtools automatically when main window loaded.' })
