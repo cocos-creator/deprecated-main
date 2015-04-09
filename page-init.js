@@ -38,14 +38,14 @@ try {
     };
 
     window.onunload = function () {
-        Fire.sendToCore( 'window:save-layout',
-                         Fire.PanelMng.getLayout(),
-                         Fire.RequireIpcEvent );
+        Editor.sendToCore( 'window:save-layout',
+                         Editor.PanelMng.getLayout(),
+                         Editor.RequireIpcEvent );
     };
 
     window.onerror = function ( message, filename, lineno, colno, error ) {
-        if (Fire && Fire.sendToWindows) {
-            Fire.sendToWindows('console:error', message);
+        if (Fire && Editor.sendToWindows) {
+            Editor.sendToWindows('console:error', message);
         } else {
             console.error(message);
         }

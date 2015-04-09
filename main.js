@@ -16,12 +16,13 @@ global.FIRE_PATH = __dirname;
 global.FIRE_DATA_PATH = Path.join( App.getPath('home'), '.fireball' );
 global.FIRE_PROJECT_PATH = "";  // will be init in Fireball.open
 global.Fire = {};
+global.Editor = {};
 
 // this will prevent default atom-shell uncaughtException
 process.removeAllListeners('uncaughtException');
 process.on('uncaughtException', function(error) {
-    if ( Fire.sendToWindows )
-        Fire.sendToWindows('console:error', error.stack || error);
+    if ( Editor.sendToWindows )
+        Editor.sendToWindows('console:error', error.stack || error);
     Winston.uncaught( error.stack || error );
 });
 
@@ -191,7 +192,7 @@ function _fireurl ( url ) {
             return Path.join( FIRE_PATH, 'src/editor-core/', relativePath );
 
         case 'assets:':
-            return Fire.AssetDB.fspath(url);
+            return Editor.AssetDB.fspath(url);
 
         default:
             return url;
@@ -290,7 +291,7 @@ function registerProtocol () {
         if ( data.pathname ) {
             relativePath = Path.join( relativePath, data.pathname );
         }
-        var file = Path.join(Fire.AssetDB.getLibraryPath(), relativePath);
+        var file = Path.join(Editor.AssetDB.getLibraryPath(), relativePath);
         var result = new Protocol.RequestFileJob(file);
         return result;
     });
@@ -298,7 +299,7 @@ function registerProtocol () {
     // DISABLE:
     // Protocol.registerProtocol('assets', function(request) {
     //     var url = decodeURIComponent(request.url);
-    //     var file = Fire.AssetDB.fspath(url);
+    //     var file = Editor.AssetDB.fspath(url);
     //     return new Protocol.RequestFileJob(file);
     // });
 
@@ -311,10 +312,10 @@ function registerProtocol () {
         if ( data.pathname ) {
             uuid = Path.join( uuid, data.pathname );
         }
-        var file = Fire.AssetDB.uuidToLibraryPath(uuid);
+        var file = Editor.AssetDB.uuidToLibraryPath(uuid);
 
         if ( data.query === "thumb" ) {
-            var rawfile = Fire.AssetDB.uuidToFspath(uuid);
+            var rawfile = Editor.AssetDB.uuidToFspath(uuid);
             file = file + ".thumb" + Path.extname(rawfile);
         }
 
@@ -328,19 +329,20 @@ function initFireApp () {
 
     // load Fire module
     Fire = require('./src/core/core');
+    Editor = Fire.Editor;
     //Fire.JS.mixin( Fire, require('./src/engine/engine.editor-core'));
     Fire.JS.mixin( Fire, require('./src/editor-share/editor-share'));
 
-    Fire.url = _fireurl;
-    Fire.loadProfile = _loadProfile;
+    Editor.url = _fireurl;
+    Editor.loadProfile = _loadProfile;
 
     // load ~/.fireball/fireball.json
-    Fire.loadProfile( 'fireball', 'global', {
+    Editor.loadProfile( 'fireball', 'global', {
         recentlyOpened: [],
     });
 
     //
-    var FireApp = require( Fire.url('editor-core://fire-app') );
+    var FireApp = require( Editor.url('editor-core://fire-app') );
     new FireApp();
 }
 
@@ -386,16 +388,16 @@ function start() {
         initFireApp();
         Fire.info("Welcome to Fireball! The next-gen html5 game engine.");
 
-        Fire.isDev = options.dev;
+        Editor.isDev = options.dev;
 
         // check if project valid
         try {
             if ( options.project ) {
-                var Fireball = require( Fire.url('editor-core://fireball') );
+                var Fireball = require( Editor.url('editor-core://fireball') );
                 Fireball.open(options);
             }
             else {
-                var Dashboard = require( Fire.url('editor-core://dashboard') );
+                var Dashboard = require( Editor.url('editor-core://dashboard') );
                 Dashboard.open();
             }
         }
