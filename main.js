@@ -327,12 +327,12 @@ function initFireApp () {
     Winston.normal( 'Initializing Fire' );
 
     // load Fire module
-    global.Fire = require('./src/core/core');
-    //Fire.JS.mixin( global.Fire, require('./src/engine/engine.editor-core'));
-    Fire.JS.mixin( global.Fire, require('./src/editor-share/editor-share'));
+    Fire = require('./src/core/core');
+    //Fire.JS.mixin( Fire, require('./src/engine/engine.editor-core'));
+    Fire.JS.mixin( Fire, require('./src/editor-share/editor-share'));
 
-    global.Fire.url = _fireurl;
-    global.Fire.loadProfile = _loadProfile;
+    Fire.url = _fireurl;
+    Fire.loadProfile = _loadProfile;
 
     // load ~/.fireball/fireball.json
     Fire.loadProfile( 'fireball', 'global', {
@@ -385,6 +385,8 @@ function start() {
         registerProtocol();
         initFireApp();
         Fire.info("Welcome to Fireball! The next-gen html5 game engine.");
+
+        Fire.isDev = options.dev;
 
         // check if project valid
         try {
