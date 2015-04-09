@@ -38,13 +38,15 @@ try {
     };
 
     window.onunload = function () {
-        Editor.sendToCore( 'window:save-layout',
-                         Editor.PanelMng.getLayout(),
-                         Editor.RequireIpcEvent );
+        if ( Editor.PanelMng ) {
+            Editor.sendToCore( 'window:save-layout',
+                             Editor.PanelMng.getLayout(),
+                             Editor.RequireIpcEvent );
+        }
     };
 
     window.onerror = function ( message, filename, lineno, colno, error ) {
-        if (Fire && Editor.sendToWindows) {
+        if (Editor && Editor.sendToWindows) {
             Editor.sendToWindows('console:error', message);
         } else {
             console.error(message);
