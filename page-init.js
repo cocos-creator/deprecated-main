@@ -38,9 +38,11 @@ try {
     };
 
     window.onunload = function () {
-        Fire.sendToCore( 'window:save-layout',
-                         Fire.PanelMng.getLayout(),
-                         Fire.RequireIpcEvent );
+        if ( Fire.PanelMng ) {
+            Fire.sendToCore( 'window:save-layout',
+                             Fire.PanelMng.getLayout(),
+                             Fire.RequireIpcEvent );
+        }
     };
 
     window.onerror = function ( message, filename, lineno, colno, error ) {
