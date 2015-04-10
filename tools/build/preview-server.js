@@ -14,7 +14,7 @@ function start() {
         app.use(express.static(Path.join(os.tmpdir(), 'fireball-game-builds')));
 
         app.get('/', function (req, res) {
-            res.send('Please preview after built !');
+            res.send('Please build your game project first!');
         });
 
 // ============================
