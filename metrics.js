@@ -3,8 +3,8 @@
  * Created by nantas on 15/3/25.
  */
 var startTime;
-var Fire = Fire || {};
-Fire.Metrics = {
+var Editor = Editor || {};
+Editor.Metrics = {
     //mixpanel event
     trackDashboardOpen: function() {
         if (analytics)

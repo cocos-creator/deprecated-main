@@ -38,16 +38,16 @@ try {
     };
 
     window.onunload = function () {
-        if ( Fire.PanelMng ) {
-            Fire.sendToCore( 'window:save-layout',
-                             Fire.PanelMng.getLayout(),
-                             Fire.RequireIpcEvent );
+        if ( Editor.PanelMng ) {
+            Editor.sendToCore( 'window:save-layout',
+                             Editor.PanelMng.getLayout(),
+                             Editor.RequireIpcEvent );
         }
     };
 
     window.onerror = function ( message, filename, lineno, colno, error ) {
-        if (Fire && Fire.sendToWindows) {
-            Fire.sendToWindows('console:error', message);
+        if (Editor && Editor.sendToWindows) {
+            Editor.sendToWindows('console:error', message);
         } else {
             console.error(message);
         }

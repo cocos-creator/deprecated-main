@@ -2,7 +2,7 @@
 // panel:ready happends when a panel open in a new window
 // panel:open happends when a panel open in a exists window
 
-Fire.sendRequestToCore( 'panel:ready', Fire.argv.panelID,
+Editor.sendRequestToCore( 'panel:ready', Editor.argv.panelID,
                         function ( detail ) {
     var panelID = detail['panel-id'];
     var panelInfo = detail['panel-info'];
@@ -10,7 +10,7 @@ Fire.sendRequestToCore( 'panel:ready', Fire.argv.panelID,
     var argv = detail.argv;
 
     var Path = require('fire-path');
-    Fire.PanelMng.load( Path.join( packagePath, panelInfo.view ),
+    Editor.PanelMng.load( Path.join( packagePath, panelInfo.view ),
                         panelID,
                         panelInfo,
                         function ( err, element ) {
@@ -26,19 +26,19 @@ Fire.sendRequestToCore( 'panel:ready', Fire.argv.panelID,
                                 dock.appendChild(panel);
                                 document.body.appendChild(dock);
 
-                                Fire.PanelMng.root = dock;
+                                Editor.PanelMng.root = dock;
                             }
                             else {
                                 document.body.appendChild(element);
 
-                                Fire.PanelMng.root = element;
+                                Editor.PanelMng.root = element;
                             }
 
                             // save layout after css layouted
                             window.requestAnimationFrame ( function () {
-                                Fire.sendToCore( 'window:save-layout',
-                                                Fire.PanelMng.getLayout(),
-                                                Fire.RequireIpcEvent );
+                                Editor.sendToCore( 'window:save-layout',
+                                                Editor.PanelMng.getLayout(),
+                                                Editor.RequireIpcEvent );
                             });
                         } );
 } );
