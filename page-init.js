@@ -38,9 +38,9 @@ try {
     };
 
     window.onunload = function () {
-        if ( Editor.PanelMng ) {
+        if ( Editor.Panel ) {
             Editor.sendToCore( 'window:save-layout',
-                             Editor.PanelMng.getLayout(),
+                             Editor.Panel.getLayout(),
                              Editor.RequireIpcEvent );
         }
     };

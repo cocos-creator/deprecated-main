@@ -10,7 +10,7 @@ Editor.sendRequestToCore( 'panel:ready', Editor.argv.panelID,
     var argv = detail.argv;
 
     var Path = require('fire-path');
-    Editor.PanelMng.load( Path.join( packagePath, panelInfo.view ),
+    Editor.Panel.load( Path.join( packagePath, panelInfo.view ),
                         panelID,
                         panelInfo,
                         function ( err, element ) {
@@ -26,18 +26,18 @@ Editor.sendRequestToCore( 'panel:ready', Editor.argv.panelID,
                                 dock.appendChild(panel);
                                 document.body.appendChild(dock);
 
-                                Editor.PanelMng.root = dock;
+                                Editor.Panel.root = dock;
                             }
                             else {
                                 document.body.appendChild(element);
 
-                                Editor.PanelMng.root = element;
+                                Editor.Panel.root = element;
                             }
 
                             // save layout after css layouted
                             window.requestAnimationFrame ( function () {
                                 Editor.sendToCore( 'window:save-layout',
-                                                Editor.PanelMng.getLayout(),
+                                                Editor.Panel.getLayout(),
                                                 Editor.RequireIpcEvent );
                             });
                         } );
