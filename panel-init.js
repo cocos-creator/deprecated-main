@@ -39,7 +39,7 @@ if ( Editor.argv.panelID ) {
                                 window.requestAnimationFrame ( function () {
                                     Editor.sendToCore( 'window:save-layout',
                                                     Editor.Panel.getLayout(),
-                                                    Editor.RequireIpcEvent );
+                                                    Editor.requireIpcEvent );
                                 });
                             } );
     } );
