@@ -223,6 +223,17 @@ gulp.task('copy-min', ['min'], function() {
         .pipe(gulp.dest('bin/dev/'));
 });
 
+// copy license
+gulp.task('copy-license-dev', function() {
+    return gulp.src('LICENSE')
+            .pipe(gulp.dest('bin/dev'));
+});
+
+gulp.task('copy-license-min', function() {
+    return gulp.src('LICENSE')
+            .pipe(gulp.dest('bin/min'));
+});
+
 /////////////////////////////////////////////////////////////////////////////
 // tasks
 /////////////////////////////////////////////////////////////////////////////
@@ -245,7 +256,7 @@ gulp.task('watch', function() {
     }
 });
 
-gulp.task('dev', ['main-dev', 'page_init_js-dev', 'metrics_js-dev', 'panel_init_js-dev', 'launch_css-dev', 'static-dev', 'tools-dev', 'build-publish-dev'] );
-gulp.task('min', ['main-min', 'page_init_js-min', 'metrics_js-min', 'panel_init_js-min', 'launch_css-min', 'static-min', 'tools-min', 'build-publish-min'] );
+gulp.task('dev', ['main-dev', 'page_init_js-dev', 'metrics_js-dev', 'panel_init_js-dev', 'launch_css-dev', 'static-dev', 'tools-dev', 'build-publish-dev', 'copy-license-dev'] );
+gulp.task('min', ['main-min', 'page_init_js-min', 'metrics_js-min', 'panel_init_js-min', 'launch_css-min', 'static-min', 'tools-min', 'build-publish-min', 'copy-license-min'] );
 gulp.task('default',['copy-min']);
 gulp.task('all', ['default'] );
