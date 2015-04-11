@@ -247,11 +247,15 @@ App.on('ready', function() {
     Winston.normal( 'Initializing fire' );
     _initFire();
 
+    Editor.registerProfilePath( 'global', Path.join( Editor.dataPath, 'settings' ) );
+    Editor.registerProfilePath( 'local', Path.join( Editor.dataPath, 'settings' ) );
+
     Winston.success('Initial success!');
 
     // check if project valid
     try {
         Fire.info('Welcome to Fireball! The next-gen html5 game engine.');
+
         // load ~/.fireball/fireball.json
         Editor.loadProfile( 'fireball', 'global', {
             recentlyOpened: [],
