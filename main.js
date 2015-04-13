@@ -238,11 +238,9 @@ App.on('ready', function() {
     Winston.normal( 'Initializing protocol' );
     require('./src/editor-core/protocol-init');
 
-    Winston.normal( 'Initializing ipc' );
-    require('./src/editor-core/ipc-init');
-
     Winston.normal( 'Initializing editor' );
     require('./src/editor-core/editor-init');
+    require('./src/editor-core/ipc-init');
 
     Winston.normal( 'Initializing fire' );
     _initFire();
