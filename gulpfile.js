@@ -76,8 +76,8 @@ paths.build_publish.src_dev = paths.build_publish.src_basic.map(function (item) 
 /////////////////////////////////////////////////////////////////////////////
 
 // clean
-gulp.task('clean', function() {
-    del('bin/');
+gulp.task('clean', function(cb) {
+    del('bin/', cb);
 });
 
 var task_js = function ( name ) {
