@@ -39,8 +39,15 @@ var paths = {
         'templates/**/*',
     ],
     build_publish: {
-        src_min: ['../core/bin/core.player.js', '../engine/bin/engine.player.js'],
-        src_dev: ['../core/bin/core.player.dev.js', '../engine/bin/engine.player.dev.js'],
+        src_basic: [['core', 'core'], ['engine', 'engine'], ['runtime/basic', 'runtime']],
+
+        //cocos: {
+        //    SRC: [['core', 'core'], ['engine', 'engine'], ['runtime/cocos', 'runtime']],
+        //    src_min:
+        //    src_dev:
+        //    dest_min:
+        //    dest_dev:
+        //},
 
         shares: [
             build_base + 'platforms/shares/**/*'
@@ -56,6 +63,13 @@ var paths = {
         ],
     },
 };
+
+paths.build_publish.src_min = paths.build_publish.src_basic.map(function (item) {
+    return Path.join('..', item[0], 'bin', item[1] + '.player.js');
+});
+paths.build_publish.src_dev = paths.build_publish.src_basic.map(function (item) {
+    return Path.join('..', item[0], 'bin', item[1] + '.player.dev.js');
+});
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -138,7 +152,6 @@ function task_build_publish_js(templateVersion, editorVersion) {
             }
             stream = stream.pipe(gulp.dest(Path.dirname(dest)));
         }
-        //stream.on('end', done);
         return stream;
     });
     // register watch
