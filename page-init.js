@@ -53,7 +53,7 @@ try {
     window.onerror = function ( message, filename, lineno, colno, error ) {
         if ( Editor && Editor.sendToWindows ) {
             Editor.sendToWindows('console:error', {
-                message: message
+                message: error.stack || error
             });
         }
         else {

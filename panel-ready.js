@@ -27,12 +27,12 @@ if ( Editor.argv.panelID ) {
                                     dock.appendChild(panel);
                                     document.body.appendChild(dock);
 
-                                    Editor.Panel.root = dock;
+                                    EditorUI.DockUtils.root = dock;
                                 }
                                 else {
                                     document.body.appendChild(element);
 
-                                    Editor.Panel.root = element;
+                                    EditorUI.DockUtils.root = element;
                                 }
 
                                 // save layout after css layouted
