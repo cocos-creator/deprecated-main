@@ -44,6 +44,9 @@ if ( !Fs.existsSync(settingsPath) ) {
     Fs.mkdirSync(settingsPath);
 }
 
+// load user App definition
+Editor.App = require('./app.js');
+
 // ---------------------------
 // initialize logs/
 // ---------------------------
@@ -162,37 +165,6 @@ Winston.add( Winston.transports.Console, {
 // initialize Commander
 // ---------------------------
 
-// DELME
-// //
-// function _parseArgv( argv ) {
-//     Nomnom
-//     .script('fire')
-//     .option('project', { position: 0, help: 'The fireball project file.' })
-//     .option('version', { abbr: 'v', flag: true, help: 'Print the version.',
-//             callback: function () { return App.getVersion(); } })
-//     .option('help', { abbr: 'h', flag: true, help: 'Print this usage message.' })
-//     .option('dev', { abbr: 'd', flag: true, help: 'Run in development mode.' })
-//     .option('showDevtools', { abbr: 'D', full: 'show-devtools', flag: true, help: 'Open devtools automatically when main window loaded.' })
-//     .option('debug', { full: 'debug', flag: true, help: 'Open in browser context debug mode.' })
-//     .option('debugBreak', { full: 'debug-brk', flag: true, help: 'Open in browser context debug mode, and break at first.' })
-//     .option('disableDirectWrite', { full: 'disable-direct-write', flag: true, help: 'Disables the DirectWrite font rendering system on windows.' })
-//     ;
-
-//     var opts = Nomnom.parse(argv);
-
-//     if ( opts.dev ) {
-//         if ( opts._.length < 2 ) {
-//             opts.project = null;
-//         }
-//         else {
-//             opts.project = opts._[opts._.length-1];
-//         }
-//     }
-
-//     return opts;
-// }
-// DELME
-
 // NOTE: commander only get things done barely in core level,
 //       it doesn't touch the page level, so it should not put into App.on('ready')
 Commander
@@ -203,13 +175,29 @@ Commander
     .option('--debug-brk <port>', 'Open in browser context debug mode, and break at first.', parseInt)
     ;
 
-Commander
-    .usage('[options] <project-path>')
-    ;
+// EXAMPLE:
+
+// usage
+// Commander
+//     .usage('[options] <file ...>')
+//     ;
+
+// command
+// Commander
+//     .command('foobar').action( function () {
+//         console.log('foobar!!!');
+//         process.exit(1);
+//     })
+//     ;
+
+if ( Editor.App.initCommander ) {
+    Editor.App.initCommander(Commander);
+}
 
 // finish Commander initialize
 Commander.parse(process.argv);
 
+// apply argv to Editor
 Editor.isDev = Commander.dev;
 Editor.showDevtools = Commander.showDevtools;
 
@@ -236,25 +224,6 @@ App.on('will-finish-launching', function() {
 });
 
 
-function _initFire () {
-    // load and mixin Fire module
-    Fire = require('./src/core/core');
-    // Fire.JS.mixin( Fire, require('./src/engine/engine.editor-core'));
-    Fire.JS.mixin( Fire, require('./src/editor-share/editor-share'));
-    Fire.JS.mixin( Fire, {
-        log: Editor.log,
-        success: Editor.success,
-        failed: Editor.failed,
-        info: Editor.info,
-        warn: Editor.warn,
-        error: Editor.error,
-        fatal: Editor.fatal,
-    });
-
-    // mixin Fire.Editor to Editor
-    Fire.JS.mixin( Editor,  Fire.Editor);
-}
-
 //
 App.on('ready', function() {
     Winston.normal( 'Initializing protocol' );
@@ -264,36 +233,39 @@ App.on('ready', function() {
     require('./src/editor-core/editor-init');
     require('./src/editor-core/ipc-init');
 
-    Winston.normal( 'Initializing fire' );
-    _initFire();
-
     Editor.registerProfilePath( 'global', Path.join( Editor.dataPath, 'settings' ) );
     Editor.registerProfilePath( 'local', Path.join( Editor.dataPath, 'settings' ) );
 
-    Winston.success('Initial success!');
-
-    // check if project valid
-    try {
-        Fire.info('Welcome to Fireball! The next-gen html5 game engine.');
-
-        // load ~/.fireball/fireball.json
-        Editor.loadProfile( 'fireball', 'global', {
-            recentlyOpened: [],
-        });
-
-        if ( Commander.args.length > 0 ) {
-            var Fireball = require( Editor.url('editor-core://fireball') );
-            Fireball.open({
-                path: Commander.args[0],
-            });
-        }
-        else {
-            var Dashboard = require( Editor.url('editor-core://dashboard') );
-            Dashboard.open();
-        }
+    // init user App
+    if ( !Editor.App.init ) {
+        Winston.error('Can not find function "init" in your App');
+        App.terminate();
+        return;
     }
-    catch ( error ) {
+
+    try {
+        Editor.App.init(Commander);
+    } catch ( error ) {
         Winston.error(error.stack || error);
         App.terminate();
+        return;
+    }
+
+    //
+    Winston.success('Initial success!');
+
+    // run user App
+    if ( !Editor.App.run ) {
+        Winston.error('Can not find function "run" in your App');
+        App.terminate();
+        return;
+    }
+
+    try {
+        Editor.App.run();
+    } catch ( error ) {
+        Winston.error(error.stack || error);
+        App.terminate();
+        return;
     }
 });

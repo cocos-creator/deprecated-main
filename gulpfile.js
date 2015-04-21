@@ -15,7 +15,8 @@ var build_base = 'tools/build/';
 
 var paths = {
     main: [
-        'main.js'
+        'main.js',
+        'app.js',
     ],
     page_init_js: [
         'page-init.js',
