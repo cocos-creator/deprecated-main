@@ -1,9 +1,12 @@
+// ---------------------------
 // load modules
+// ---------------------------
+
 var App = require('app');
 var Path = require('fire-path');
 var Fs = require('fire-fs');
 var Url = require('fire-url');
-var Nomnom = require('nomnom');
+var Commander = require('commander');
 var Chalk = require('chalk');
 var Winston = require('winston');
 
@@ -18,7 +21,10 @@ process.on('uncaughtException', function(error) {
     Winston.uncaught( error.stack || error );
 });
 
+// ---------------------------
 // initialize minimal Editor
+// ---------------------------
+
 global.Editor = {};
 global.Fire = {};
 
@@ -26,7 +32,6 @@ Editor.name = App.getName();
 Editor.cwd = __dirname;
 // NOTE: Editor.dataPath = ~/.{app-name}/
 Editor.dataPath = Path.join( App.getPath('home'), '.' + Editor.name );
-Editor.projectPath = ''; // will be init in Fireball.open
 
 // initialize ~/.{app-name}
 if ( !Fs.existsSync(Editor.dataPath) ) {
@@ -39,7 +44,10 @@ if ( !Fs.existsSync(settingsPath) ) {
     Fs.mkdirSync(settingsPath);
 }
 
+// ---------------------------
 // initialize logs/
+// ---------------------------
+
 // MacOSX: ~/Library/Logs/{app-name}
 // Windows: %APPDATA%, some where like 'C:\Users\{your user name}\AppData\Local\...'
 
@@ -150,57 +158,68 @@ Winston.add( Winston.transports.Console, {
     }
 });
 
-//
-function _parseArgv( argv ) {
-    Nomnom
-    .script('fire')
-    .option('project', { position: 0, help: 'The fireball project file.' })
-    .option('version', { abbr: 'v', flag: true, help: 'Print the version.',
-            callback: function () { return App.getVersion(); } })
-    .option('help', { abbr: 'h', flag: true, help: 'Print this usage message.' })
-    .option('dev', { abbr: 'd', flag: true, help: 'Run in development mode.' })
-    .option('showDevtools', { abbr: 'D', full: 'show-devtools', flag: true, help: 'Open devtools automatically when main window loaded.' })
-    .option('debug', { full: 'debug', flag: true, help: 'Open in browser context debug mode.' })
-    .option('debugBreak', { full: 'debug-brk', flag: true, help: 'Open in browser context debug mode, and break at first.' })
-    .option('disableDirectWrite', { full: 'disable-direct-write', flag: true, help: 'Disables the DirectWrite font rendering system on windows.' })
+// ---------------------------
+// initialize Commander
+// ---------------------------
+
+// DELME
+// //
+// function _parseArgv( argv ) {
+//     Nomnom
+//     .script('fire')
+//     .option('project', { position: 0, help: 'The fireball project file.' })
+//     .option('version', { abbr: 'v', flag: true, help: 'Print the version.',
+//             callback: function () { return App.getVersion(); } })
+//     .option('help', { abbr: 'h', flag: true, help: 'Print this usage message.' })
+//     .option('dev', { abbr: 'd', flag: true, help: 'Run in development mode.' })
+//     .option('showDevtools', { abbr: 'D', full: 'show-devtools', flag: true, help: 'Open devtools automatically when main window loaded.' })
+//     .option('debug', { full: 'debug', flag: true, help: 'Open in browser context debug mode.' })
+//     .option('debugBreak', { full: 'debug-brk', flag: true, help: 'Open in browser context debug mode, and break at first.' })
+//     .option('disableDirectWrite', { full: 'disable-direct-write', flag: true, help: 'Disables the DirectWrite font rendering system on windows.' })
+//     ;
+
+//     var opts = Nomnom.parse(argv);
+
+//     if ( opts.dev ) {
+//         if ( opts._.length < 2 ) {
+//             opts.project = null;
+//         }
+//         else {
+//             opts.project = opts._[opts._.length-1];
+//         }
+//     }
+
+//     return opts;
+// }
+// DELME
+
+// NOTE: commander only get things done barely in core level,
+//       it doesn't touch the page level, so it should not put into App.on('ready')
+Commander
+    .version(App.getVersion())
+    .option('--dev', 'Run in development mode')
+    .option('--show-devtools', 'Open devtools automatically when main window loaded')
+    .option('--debug <port>', 'Open in browser context debug mode', parseInt )
+    .option('--debug-brk <port>', 'Open in browser context debug mode, and break at first.', parseInt)
     ;
 
-    var opts = Nomnom.parse(argv);
+Commander
+    .usage('[options] <project-path>')
+    ;
 
-    if ( opts.dev ) {
-        if ( opts._.length < 2 ) {
-            opts.project = null;
-        }
-        else {
-            opts.project = opts._[opts._.length-1];
-        }
-    }
+// finish Commander initialize
+Commander.parse(process.argv);
 
-    return opts;
-}
-
-// parse process arguments
-var options = _parseArgv( process.argv.slice(1) );
-
-Editor.isDev = options.dev;
+Editor.isDev = Commander.dev;
+Editor.showDevtools = Commander.showDevtools;
 
 // DISABLE: http cache only happends afterwhile, not satisefy our demand (which need to happend immediately).
 // App.commandLine.appendSwitch('disable-http-cache');
-if ( options.disableDirectWrite ) {
-    App.commandLine.appendSwitch('disable-direct-write');
-}
+// App.commandLine.appendSwitch('disable-direct-write');
 
 // quit when all windows are closed.
 App.on('window-all-closed', function( event ) {
     App.quit();
-});
-
-App.on('open-file', function() {
-    // TODO
-});
-
-App.on('open-url', function() {
-    // TODO
 });
 
 //
@@ -262,9 +281,11 @@ App.on('ready', function() {
             recentlyOpened: [],
         });
 
-        if ( options.project ) {
+        if ( Commander.args.length > 0 ) {
             var Fireball = require( Editor.url('editor-core://fireball') );
-            Fireball.open(options);
+            Fireball.open({
+                path: Commander.args[0],
+            });
         }
         else {
             var Dashboard = require( Editor.url('editor-core://dashboard') );
