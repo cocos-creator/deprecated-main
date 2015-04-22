@@ -40,37 +40,38 @@ var paths = {
         'templates/**/*',
     ],
     build_publish: {
-        src_basic: [['core', 'core'], ['engine', 'engine'], ['runtime/basic', 'runtime']],
-
-        //cocos: {
-        //    SRC: [['core', 'core'], ['engine', 'engine'], ['runtime/cocos', 'runtime']],
-        //    src_min:
-        //    src_dev:
-        //    dest_min:
-        //    dest_dev:
-        //},
-
+        runtimes: {
+            basic: {
+                src_tmpl: [['core', 'core'], ['engine', 'engine'], ['runtime/basic', 'runtime']]
+            },
+            cocos: {
+                src_tmpl: [['core', 'core'], ['engine', 'engine'], ['runtime/cocos', 'runtime']]
+            },
+        },
+        dest_dev: 'fireball.dev.js',
+        dest_min: 'fireball.js',
         shares: [
             build_base + 'platforms/shares/**/*'
         ],
-
-        dest_dev: [
-            'web-desktop/template-dev/firaball-x.dev.js',
-            'web-mobile/template-dev/firaball-x.dev.js',
-        ],
-        dest_min: [
-            'web-desktop/template/firaball-x.js',
-            'web-mobile/template/firaball-x.js',
+        dest_shares: [
+            'web-desktop/template-dev',
+            'web-mobile/template-dev',
+            'web-desktop/template',
+            'web-mobile/template',
         ],
     },
 };
 
-paths.build_publish.src_min = paths.build_publish.src_basic.map(function (item) {
-    return Path.join('..', item[0], 'bin', item[1] + '.player.js');
-});
-paths.build_publish.src_dev = paths.build_publish.src_basic.map(function (item) {
-    return Path.join('..', item[0], 'bin', item[1] + '.player.dev.js');
-});
+// 生成 src_min 和 src_dev
+for (var runtime in paths.build_publish.runtimes) {
+    var profile = paths.build_publish.runtimes[runtime];
+    profile.src_min = profile.src_tmpl.map(function (item) {
+        return Path.join('..', item[0], 'bin', item[1] + '.player.js');
+    });
+    profile.src_dev = profile.src_tmpl.map(function (item) {
+        return Path.join('..', item[0], 'bin', item[1] + '.player.dev.js');
+    });
+}
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -135,24 +136,30 @@ gulp.task( 'launch_css-min', ['launch_css-dev'], function() {
 });
 
 /**
- * @param {string} templateVersion - dev or min
+ * @param {string} playerVersion - dev or min
  * @param {string} editorVersion - dev or min
+ * @param {string} runtime
  */
-function task_build_publish_js(templateVersion, editorVersion) {
-    var src = paths.build_publish['src_' + templateVersion];
-    var taskname = 'build-publish-js-' + templateVersion + '_' + editorVersion;
+function task_build_publish_js(playerVersion, editorVersion, runtime) {
+    var src = paths.build_publish.runtimes[runtime]['src_' + playerVersion];
+    var taskname = 'build-publish-js-' + runtime + '-' + playerVersion + '_' + editorVersion;
     // register task
     gulp.task(taskname, function () {
+        var dest = paths.build_publish['dest_' + playerVersion]; // dest_min / dest_dev
+        dest = Path.join('bin', editorVersion, build_base, 'engine', runtime, dest);
+        //console.log('src', src);
+        //console.log('dest', dest);
         var stream = gulp.src(src)
-                         .pipe(concat('blabla.js'));
-        for (var i = 0, dests = paths.build_publish['dest_' + templateVersion]; i < dests.length; i++) {
-            var dest = Path.join('bin', editorVersion, build_base, 'platforms', dests[i]);
-            stream = stream.pipe(rename(Path.basename(dest))).pipe(gulp.dest('bin'));
-            if (templateVersion === 'min') {
-                stream = stream.pipe(uglifyjs());
-            }
-            stream = stream.pipe(gulp.dest(Path.dirname(dest)));
+                         .pipe(concat(Path.basename(dest)));
+        if (playerVersion === 'min') {
+            stream = stream.pipe(uglifyjs({
+                //compress: {
+                //    dead_code: true,
+                //    unused: true
+                //}
+            }));
         }
+        stream = stream.pipe(gulp.dest(Path.dirname(dest)));
         return stream;
     });
     // register watch
@@ -165,16 +172,15 @@ function task_build_publish_js(templateVersion, editorVersion) {
     return taskname;
 }
 
-function task_copy_shares(templateVersion, editorVersion) {
+function task_copy_shares(editorVersion) {
     var src = paths.build_publish.shares;
-    var taskname = 'copy-shares-' + templateVersion + '_' + editorVersion;
+    var taskname = 'copy-shares-' + editorVersion;
     // register task
     gulp.task(taskname, function () {
         var stream = gulp.src(src);
-        var i, dest;
-        for (i = 0, dests = paths.build_publish['dest_' + templateVersion]; i < dests.length; i++) {
-            dest = Path.join('bin', editorVersion, build_base, 'platforms', dests[i]);
-            stream = stream.pipe(gulp.dest(Path.dirname(dest)));
+        for (var i = 0, dests = paths.build_publish.dest_shares; i < dests.length; i++) {
+            var dest = Path.join('bin', editorVersion, build_base, 'platforms', dests[i]);
+            stream = stream.pipe(gulp.dest(dest));
         }
         return stream;
     });
@@ -190,16 +196,18 @@ function task_copy_shares(templateVersion, editorVersion) {
 
 // build publish
 gulp.task('build-publish-dev', [
-    task_build_publish_js('dev', 'dev'),
-    task_build_publish_js('min', 'dev'),
-    task_copy_shares('dev', 'dev'),
-    task_copy_shares('min', 'dev'),
+    task_build_publish_js('dev', 'dev', 'cocos'),
+    task_build_publish_js('min', 'dev', 'cocos'),
+    task_build_publish_js('dev', 'dev', 'basic'),
+    task_build_publish_js('min', 'dev', 'basic'),
+    task_copy_shares('dev'),
 ]);
 gulp.task('build-publish-min', [
-    task_build_publish_js('dev', 'min'),
-    task_build_publish_js('min', 'min'),
-    task_copy_shares('dev', 'min'),
-    task_copy_shares('min', 'min'),
+    task_build_publish_js('dev', 'min', 'cocos'),
+    task_build_publish_js('min', 'min', 'cocos'),
+    task_build_publish_js('dev', 'min', 'basic'),
+    task_build_publish_js('min', 'min', 'basic'),
+    task_copy_shares('min'),
 ]);
 
 // static-files-dev
