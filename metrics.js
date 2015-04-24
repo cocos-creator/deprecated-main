@@ -5,6 +5,19 @@
 var startTime;
 var Editor = Editor || {};
 Editor.Metrics = {
+    //segment identification
+    identifyUser: function(user) {//userId, email, username, fullname, company, newsletter
+       if (analytics && user) {
+         console.log('identifying user');
+         analytics.identify(user.id, {
+           name: user.fullname,
+           email: user.email,
+           username: user.username,
+           company: user.company,
+           newsletter: user.subscribes.newsletter
+         });
+       }
+    },
     //mixpanel event
     trackDashboardOpen: function() {
         if (analytics)
