@@ -3,12 +3,36 @@
     <title>Fireball Login</title>
 
     <script>
+        var nextSessionId = 0;
+        var replyCallbacks = {};
         var Ipc = require('ipc');
         var Editor = {
             sendToCore: function ( message ) {
                 'use strict';
                 var args = [].slice.call( arguments );
                 Ipc.send.apply( Ipc, ['editor:send2core'].concat( args ) );
+            },
+            sendRequestToCore: function (request) {
+                'use strict';
+                if (typeof request === 'string') {
+                    var args = [].slice.call(arguments, 1);
+                    var reply = args[args.length - 1];
+                    if (typeof reply === 'function') {
+                        args.pop();
+
+                        var sessionId = nextSessionId++;
+                        var key = "" + sessionId;
+                        replyCallbacks[key] = reply;
+
+                        Ipc.send('editor:sendreq2core', request, args, sessionId);
+                    }
+                    else {
+                        Fire.error('The reply must be of type function');
+                    }
+                }
+                else {
+                    Fire.error('The request must be of type string');
+                }
             },
             requireIpcEvent: {
                 '__is_ipc_option__': true,
@@ -19,6 +43,22 @@
                 'self-excluded': true,
             },
         };
+        Ipc.on('editor:sendreq2core:reply', function replyCallback (args, sessionId) {
+            'use strict';
+            var key = "" + sessionId;
+            var cb = replyCallbacks[key];
+            if (cb) {
+                cb.apply(null, args);
+
+                //if (sessionId + 1 === nextSessionId) {
+                //    --nextSessionId;
+                //}
+                delete replyCallbacks[key];
+            }
+            else {
+                Editor.error('non-exists callback of session:', sessionId);
+            }
+        });
     </script>
     <script type="text/javascript" src="fire://page-init.js"></script>
 
