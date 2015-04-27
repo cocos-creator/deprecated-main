@@ -42,6 +42,9 @@
                 '__is_ipc_option__': true,
                 'self-excluded': true,
             },
+            login: function ( account, passwd, cb ) {
+                Editor.sendRequestToCore( 'editor:login', account, passwd, cb );
+            },
         };
         Ipc.on('editor:sendreq2core:reply', function replyCallback (args, sessionId) {
             'use strict';
