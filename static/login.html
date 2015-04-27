@@ -25,6 +25,7 @@
                         replyCallbacks[key] = reply;
 
                         Ipc.send('editor:sendreq2core', request, args, sessionId);
+                        return sessionId;
                     }
                     else {
                         Fire.error('The reply must be of type function');
@@ -32,6 +33,15 @@
                 }
                 else {
                     Fire.error('The request must be of type string');
+                }
+                return -1;
+            },
+            cancelRequestToCore: function (sessionId) {
+                'use strict';
+                var key = "" + sessionId;
+                var cb = replyCallbacks[key];
+                if ( cb ) {
+                    delete replyCallbacks[key];
                 }
             },
             requireIpcEvent: {
@@ -43,7 +53,10 @@
                 'self-excluded': true,
             },
             login: function ( account, passwd, cb ) {
-                Editor.sendRequestToCore( 'editor:login', account, passwd, cb );
+                return Editor.sendRequestToCore( 'editor:login', account, passwd, cb );
+            },
+            cancelLogin: function (id) {
+                Editor.cancelRequestToCore( id );
             },
         };
         Ipc.on('editor:sendreq2core:reply', function replyCallback (args, sessionId) {
@@ -52,14 +65,7 @@
             var cb = replyCallbacks[key];
             if (cb) {
                 cb.apply(null, args);
-
-                //if (sessionId + 1 === nextSessionId) {
-                //    --nextSessionId;
-                //}
                 delete replyCallbacks[key];
-            }
-            else {
-                Editor.error('non-exists callback of session:', sessionId);
             }
         });
     </script>
