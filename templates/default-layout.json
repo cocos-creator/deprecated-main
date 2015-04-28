@@ -12,13 +12,13 @@
           "type": "panel",
           "height": 300,
           "panels": [
-            "fire-hierarchy"
+            "fire-hierarchy.default"
           ]
         },
         {
           "type": "panel",
           "panels": [
-            "fire-assets"
+            "fire-assets.default"
           ]
         }
       ]
@@ -28,7 +28,7 @@
       "width": 300,
       "min-width": 240,
       "panels": [
-        "fire-inspector"
+        "fire-inspector.default"
       ]
     },
     {
@@ -37,15 +37,15 @@
         {
           "type": "panel",
           "panels": [
-            "fire-scene",
-            "fire-game"
+            "fire-scene.default",
+            "fire-game.default"
           ]
         },
         {
           "type": "panel",
           "height": 200,
           "panels": [
-            "fire-console"
+            "fire-console.default"
           ]
         }
       ]

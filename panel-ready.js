@@ -3,7 +3,7 @@
 // panel:open happends when a panel open in a exists window
 
 if ( Editor.argv.panelID ) {
-    Editor.sendRequestToCore( 'panel:page-ready', Editor.argv.panelID,
+    Editor.sendRequestToCore( 'panel:query-info', Editor.argv.panelID,
                             function ( detail ) {
         var panelInfo = detail['panel-info'];
         var packagePath = detail['package-path'];
