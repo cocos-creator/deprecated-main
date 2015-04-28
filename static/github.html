@@ -1,0 +1,103 @@
+<html>
+<head>
+    <title>Github Authored</title>
+    <style>
+        body {
+            margin: 0px;
+            padding: 0px;
+            border: 0px;
+
+            overflow: hidden;
+            color: #ddd;
+            background-color: #333;
+        }
+    </style>
+    <script>
+        var nextSessionId = 0;
+        var replyCallbacks = {};
+        var Ipc = require('ipc');
+        var Editor = {
+            sendToCore: function ( message ) {
+                'use strict';
+                var args = [].slice.call( arguments );
+                Ipc.send.apply( Ipc, ['editor:send2core'].concat( args ) );
+            },
+            sendRequestToCore: function (request) {
+                'use strict';
+                if (typeof request === 'string') {
+                    var args = [].slice.call(arguments, 1);
+                    var reply = args[args.length - 1];
+                    if (typeof reply === 'function') {
+                        args.pop();
+
+                        var sessionId = nextSessionId++;
+                        var key = "" + sessionId;
+                        replyCallbacks[key] = reply;
+
+                        Ipc.send('editor:sendreq2core', request, args, sessionId);
+                        return sessionId;
+                    }
+                    else {
+                        Fire.error('The reply must be of type function');
+                    }
+                }
+                else {
+                    Fire.error('The request must be of type string');
+                }
+                return -1;
+            },
+            cancelRequestToCore: function (sessionId) {
+                'use strict';
+                var key = "" + sessionId;
+                var cb = replyCallbacks[key];
+                if ( cb ) {
+                    delete replyCallbacks[key];
+                }
+            },
+            requireIpcEvent: {
+                '__is_ipc_option__': true,
+                'require-ipc-event': true,
+            },
+            selfExcluded: {
+                '__is_ipc_option__': true,
+                'self-excluded': true,
+            },
+
+            sendToWindows: function ( message ) {
+                'use strict';
+                if ( typeof message === 'string' ) {
+                    var args = [].slice.call( arguments );
+                    Ipc.send.apply( Ipc, ['editor:send2wins'].concat( args ) );
+                }
+                else {
+                    Fire.error('The message must be provided');
+                }
+            },
+        };
+        Ipc.on('editor:sendreq2core:reply', function replyCallback (args, sessionId) {
+            'use strict';
+            var key = "" + sessionId;
+            var cb = replyCallbacks[key];
+            if (cb) {
+                cb.apply(null, args);
+                delete replyCallbacks[key];
+            }
+        });
+    </script>
+</head>
+<body>
+    <fire-login-github></fire-login-github>
+</body>
+
+<script type="text/javascript" src="fire://metrics.js"></script>
+<script type="text/javascript" src="fire://src/core/core.js"></script>
+
+<link rel="stylesheet" href="fire://ext/fontawesome/css/font-awesome.css">
+
+<link rel="import" href="fire://ext/polymer/polymer.html">
+<link rel="import" href="fire://src/editor-ui/editor-ui.html">
+<link rel="import" href="fire://builtin/fire-login/editor/panel/github.html">
+<script>
+
+</script>
+</html>
