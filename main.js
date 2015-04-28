@@ -210,15 +210,15 @@ App.on('window-all-closed', function( event ) {
 
 //
 App.on('will-finish-launching', function() {
-    if ( !Editor.isDev ) {
-        var crashReporter = require('crash-reporter');
-        crashReporter.start({
-            productName: 'Fireball',
-            companyName: 'FireBox',
-            submitUrl: 'https://fireball-x.com/crash-report',
-            autoSubmit: false,
-        });
-    }
+    // if ( !Editor.isDev ) {
+    //     var crashReporter = require('crash-reporter');
+    //     crashReporter.start({
+    //         productName: 'Fireball',
+    //         companyName: 'FireBox',
+    //         submitUrl: 'https://fireball-x.com/crash-report',
+    //         autoSubmit: false,
+    //     });
+    // }
 });
 
 
