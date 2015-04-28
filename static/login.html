@@ -52,9 +52,15 @@
                 '__is_ipc_option__': true,
                 'self-excluded': true,
             },
+            
             login: function ( account, passwd, cb ) {
                 return Editor.sendRequestToCore( 'editor:login', account, passwd, cb );
             },
+
+            tokenLogin: function ( token, userId, cb ) {
+                return Editor.sendRequestToCore( 'editor:token-login', token, userId, cb );
+            },
+
             cancelLogin: function (id) {
                 Editor.cancelRequestToCore( id );
             },
