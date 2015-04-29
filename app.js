@@ -29,7 +29,7 @@ function _initLoginIpc () {
         var fireballProfile = Editor.loadProfile( 'fireball', 'global' );
         var lastLoginAccount = fireballProfile['last-login'];
         var rememberPasswd = fireballProfile['remember-passwd'];
-
+        var loginType = fireballProfile['login-type'];
         // get password
         if ( rememberPasswd ) {
             Getmac.getMac( function ( err, macAddress) {
@@ -57,6 +57,7 @@ function _initLoginIpc () {
                         'account': lastLoginAccount,
                         'remember-passwd': rememberPasswd,
                         'password': passwd,
+                        'login-type': loginType,
                     });
                 }
             });
@@ -66,6 +67,7 @@ function _initLoginIpc () {
                 'account': lastLoginAccount,
                 'remember-passwd': rememberPasswd,
                 'password': '',
+                'login-type': loginType,
             });
         }
     });
@@ -75,6 +77,7 @@ function _initLoginIpc () {
         if ( detail.account !== undefined ) {
             fireballProfile['last-login'] = detail.account;
         }
+        fireballProfile['login-type'] = detail['login-type'];
         if ( detail['remember-passwd'] !== undefined ) {
             fireballProfile['remember-passwd'] = detail['remember-passwd'];
 
@@ -96,6 +99,7 @@ function _initLoginIpc () {
     Ipc.on('login:succeed', function ( detail ) {
         var fireballProfile = Editor.loadProfile( 'fireball', 'global' );
         fireballProfile['last-login'] = detail.account;
+        fireballProfile['login-type'] = detail['login-type'];
         fireballProfile['remember-passwd'] = detail['remember-passwd'];
         fireballProfile.save();
 
@@ -120,6 +124,8 @@ function _initLoginIpc () {
                 Fs.writeFileSync(infoFile, JSON.stringify(info, null, 2));
             });
         }
+
+        Editor.sendToWindows('popup:login');
     });
 }
 
@@ -148,6 +154,7 @@ module.exports = {
             'recently-opened': [],
             'last-login': '',
             'remember-passwd': true,
+            'login-type': 'account',
         });
 
         if ( options.args.length > 0 ) {
@@ -181,4 +188,3 @@ module.exports = {
         }
     }
 };
-
