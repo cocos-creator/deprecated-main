@@ -86,15 +86,27 @@
     </script>
 </head>
 <body>
-    <fire-login-github></fire-login-github>
 </body>
 
+
 <script type="text/javascript" src="fire://metrics.js"></script>
-<script type="text/javascript" src="fire://src/core/core.js"></script>
+<script>
+    function getQueryString(name) {
+        var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+        var r = window.location.search.substr(1).match(reg);
+        if (r !== null )
+        return unescape(r[2]);
 
-<link rel="stylesheet" href="fire://ext/fontawesome/css/font-awesome.css">
+        return null;
+    }
 
-<link rel="import" href="fire://ext/polymer/polymer.html">
-<link rel="import" href="fire://src/editor-ui/editor-ui.html">
-<link rel="import" href="fire://builtin/fire-login/editor/panel/fire-login.html">
+    var access_token = getQueryString('access_token');
+
+    var userId = getQueryString('user_id');
+    Editor.sendToWindows('github:login',access_token,userId);
+
+    var remote = require('remote');
+    var browserWindow = remote.getCurrentWindow();
+    browserWindow.close();
+</script>
 </html>
