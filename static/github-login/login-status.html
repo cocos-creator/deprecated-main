@@ -155,6 +155,8 @@
     </div>
 </body>
 <script>
-    window.location.href = 'https://accounts.fireball-x.com/auth/github?callback=fire://static/github-login/github.html';
+    var remote = require('remote');
+    var win = remote.getCurrentWindow();
+    win.loadUrl('https://accounts.fireball-x.com/auth/github?callback=fire://static/github-login/github.html');
 </script>
 </html>
