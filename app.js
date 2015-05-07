@@ -4,6 +4,7 @@ var Path = require('fire-path');
 var Ipc = require('ipc');
 var Crypto = require('crypto');
 var Getmac = require('getmac');
+var Request = require('request');
 
 function _initFire () {
     global.Fire = {};
