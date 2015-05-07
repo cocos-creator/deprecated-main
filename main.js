@@ -1,5 +1,4 @@
 global.Editor = {};
-global.Fire = {};
 
 
 // load user App definition
@@ -299,7 +298,6 @@ App.on('ready', function() {
 
     Winston.normal( 'Initializing editor' );
     require('./src/editor-core/editor-init');
-    require('./src/editor-core/ipc-init');
 
     Editor.registerProfilePath( 'global', Path.join( Editor.dataPath, 'settings' ) );
     Editor.registerProfilePath( 'local', Path.join( Editor.dataPath, 'settings' ) );

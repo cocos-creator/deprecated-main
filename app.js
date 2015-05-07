@@ -6,6 +6,8 @@ var Crypto = require('crypto');
 var Getmac = require('getmac');
 
 function _initFire () {
+    global.Fire = {};
+
     // load and mixin Fire module
     Fire = require('./src/core/core');
     // Fire.JS.mixin( Fire, require('./src/engine/engine.editor-core'));
@@ -22,6 +24,11 @@ function _initFire () {
 
     // mixin Fire.Editor to Editor
     Fire.JS.mixin( Editor,  Fire.Editor);
+}
+
+function _verifyEmail (value) {
+    var reg = /^\w+((-\w+)|(\.\w+))*\@[A-Za-z0-9]+((\.|-)[A-Za-z0-9]+)*\.[A-Za-z0-9]+$/;
+    return reg.test(value);
 }
 
 var _projectPath = null;
@@ -189,5 +196,144 @@ module.exports = {
         }
 
         Editor.sendToWindows('popup:login');
+    },
+
+    'editor:login': function ( reply, account, password ) {
+        var isEmail = _verifyEmail(account);
+
+        var formData = {
+            username: isEmail ? '' : account,
+            email: isEmail ? account : '',
+            password: password,
+        };
+
+        var options = {
+            url: 'https://accounts.fireball-x.com/login',
+            form: formData,
+            headers: {
+                'accept': 'application/json',
+                'content-type': 'application/json',
+            }
+        };
+
+        Request.post( options, function ( err, httpResponse, body ) {
+            if ( err ) {
+                reply( err.message );
+                return;
+            }
+
+            if ( httpResponse.statusCode !== 200 ) {
+                reply( JSON.parse(body).error.message );
+                return;
+            }
+
+            var token = JSON.parse(body).id;
+            var userId = JSON.parse(body).userId;
+            var opt = {
+                url: 'https://accounts.fireball-x.com/api/users/' + userId + '?access_token=' + token,
+                headers: {
+                    'accept': 'application/json',
+                    'content-type': 'application/json'
+                }
+            };
+            Request.get(opt, function (err, res, body) {
+                if ( err ) {
+                    reply( err.message );
+                    return;
+                }
+
+                if ( res.statusCode !== 200 ) {
+                    reply( JSON.parse(body).error.message );
+                    return;
+                }
+
+                var userInfo = JSON.parse(body);
+                Editor.token = token;
+                Editor.userInfo = userInfo;
+
+                Editor.sendToWindows('editor:user-info-changed', {
+                    'token': token,
+                    'user-info': userInfo,
+                });
+
+                reply( null, {
+                    'token': token,
+                    'user-info': userInfo,
+                });
+            });
+        });
+    },
+
+    'editor:token-login': function (reply,token, userId) {
+        var opt = {
+            url: 'https://accounts.fireball-x.com/api/users/' + userId + '?access_token=' + token,
+            headers: {
+                'accept': 'application/json',
+                'content-type': 'application/json'
+            }
+        };
+        Request.get(opt, function (err, res, body) {
+            if ( err ) {
+                reply(err);
+                return;
+            }
+
+            if ( res.statusCode !== 200 ) {
+                reply( JSON.parse(body).error.message );
+                return;
+            }
+
+            var userInfo = JSON.parse(body);
+            Editor.userInfo = userInfo;
+            Editor.token = token;
+
+            Editor.sendToWindows('editor:user-info-changed', {
+                'token': Editor.token,
+                'user-info': userInfo,
+            });
+
+            reply(userInfo);
+        });
+    },
+
+    'editor:logout': function ( reply ) {
+        var opt = {
+            url: 'https://accounts.fireball-x.com//logout?access_token=' + Editor.token,
+            headers: {
+                'accept': 'application/json',
+                'content-type': 'application/json'
+            }
+        };
+        Editor.token = null;
+        Editor.userInfo = null;
+
+        var fireballProfile = Editor.loadProfile( 'fireball', 'global' );
+        var account = fireballProfile['last-login'];
+        fireballProfile['last-login'] = '';
+        fireballProfile['login-type'] = 'account';
+
+        // remove passwd if remember is false
+        var infoFile = Path.join(Editor.dataPath,'.info');
+        if ( Fs.existsSync(infoFile) ) {
+            var info = JSON.parse(Fs.readFileSync(infoFile));
+            if ( info[account] ) {
+                delete info[account];
+            }
+            Fs.writeFileSync(infoFile, JSON.stringify(info, null, 2));
+        }
+        fireballProfile.save();
+
+
+        Request.post(opt,function (err, httpResponse, body) {
+            if (err || httpResponse.statusCode !== 200) {
+                return;
+            }
+
+            Editor.sendToWindows('editor:user-info-changed', {
+                'token': null,
+                'user-info': null,
+            });
+        });
+        reply("log out");
     },
 };

@@ -6,7 +6,7 @@ var startTime;
 var Editor = Editor || {};
 
 (function(document) {
-    localStorage.cookies || (localStorage.cookies = '{}');
+    localStorage.cookies = localStorage.cookies || (localStorage.cookies = '{}');
     document.__defineGetter__('cookie', function() {
       var cookieName, cookies, output, val;
       cookies = JSON.parse(localStorage.cookies);
@@ -49,7 +49,7 @@ var Editor = Editor || {};
     });
     return document.__defineSetter__('location', function() {});
   })(document);
-  
+
 Editor.Metrics = {
     //segment identification
     identifyUser: function(user) {//userId, email, username, fullname, company, newsletter
