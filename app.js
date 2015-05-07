@@ -24,8 +24,71 @@ function _initFire () {
     Fire.JS.mixin( Editor,  Fire.Editor);
 }
 
-function _initLoginIpc () {
-    Ipc.on('login:query-info', function ( reply ) {
+var _projectPath = null;
+var _requireLogin = false;
+
+// exports
+module.exports = {
+
+    initCommander: function ( commander ) {
+        commander
+            .usage('[options] <project-path>')
+            .option('--test-login', 'Test login module in dev mode.')
+            ;
+    },
+
+    init: function ( options ) {
+        Editor.log( 'Initializing fire' );
+        _initFire();
+
+        Fire.info('Welcome to Fireball! The next-gen html5 game engine.');
+
+        // load ~/.fireball/fireball.json
+        Editor.loadProfile( 'fireball', 'global', {
+            'recently-opened': [],
+            'last-login': '',
+            'remember-passwd': true,
+            'login-type': 'account',
+        });
+
+        if ( options.args.length > 0 ) {
+            _projectPath = options.args[0];
+        }
+
+        _requireLogin = !Editor.isDev || options.testLogin;
+    },
+
+    run: function () {
+        // require login in release environment
+        if ( _requireLogin ) {
+            var Login = require( Editor.url('editor-core://login') );
+            Login.open(this.enter);
+        }
+        else {
+            this.enter();
+        }
+    },
+
+    enter: function () {
+        if ( _projectPath ) {
+            var Fireball = require( Editor.url('editor-core://fireball') );
+            Fireball.open({
+                path: _projectPath,
+            });
+        }
+        else {
+            var Dashboard = require( Editor.url('editor-core://dashboard') );
+            Dashboard.open();
+        }
+    },
+
+    load: function () {
+    },
+
+    unload: function () {
+    },
+
+    'login:query-info': function ( reply ) {
         var fireballProfile = Editor.loadProfile( 'fireball', 'global' );
         var lastLoginAccount = fireballProfile['last-login'];
         var rememberPasswd = fireballProfile['remember-passwd'];
@@ -70,9 +133,9 @@ function _initLoginIpc () {
                 'login-type': loginType,
             });
         }
-    });
+    },
 
-    Ipc.on('login:save', function ( detail ) {
+    'login:save': function ( detail ) {
         var fireballProfile = Editor.loadProfile( 'fireball', 'global' );
         if ( detail.account !== undefined ) {
             fireballProfile['last-login'] = detail.account;
@@ -94,9 +157,9 @@ function _initLoginIpc () {
             }
         }
         fireballProfile.save();
-    });
+    },
 
-    Ipc.on('login:succeed', function ( detail ) {
+    'login:succeed': function ( detail ) {
         var fireballProfile = Editor.loadProfile( 'fireball', 'global' );
         fireballProfile['last-login'] = detail.account;
         fireballProfile['login-type'] = detail['login-type'];
@@ -126,65 +189,5 @@ function _initLoginIpc () {
         }
 
         Editor.sendToWindows('popup:login');
-    });
-}
-
-var _projectPath = null;
-var _requireLogin = false;
-
-// exports
-module.exports = {
-
-    initCommander: function ( commander ) {
-        commander
-            .usage('[options] <project-path>')
-            .option('--test-login', 'Test login module in dev mode.')
-            ;
     },
-
-    init: function ( options ) {
-        Editor.log( 'Initializing fire' );
-        _initFire();
-        _initLoginIpc();
-
-        Fire.info('Welcome to Fireball! The next-gen html5 game engine.');
-
-        // load ~/.fireball/fireball.json
-        Editor.loadProfile( 'fireball', 'global', {
-            'recently-opened': [],
-            'last-login': '',
-            'remember-passwd': true,
-            'login-type': 'account',
-        });
-
-        if ( options.args.length > 0 ) {
-            _projectPath = options.args[0];
-        }
-
-        _requireLogin = !Editor.isDev || options.testLogin;
-    },
-
-    run: function () {
-        // require login in release environment
-        if ( _requireLogin ) {
-            var Login = require( Editor.url('editor-core://login') );
-            Login.open(this.enter);
-        }
-        else {
-            this.enter();
-        }
-    },
-
-    enter: function () {
-        if ( _projectPath ) {
-            var Fireball = require( Editor.url('editor-core://fireball') );
-            Fireball.open({
-                path: _projectPath,
-            });
-        }
-        else {
-            var Dashboard = require( Editor.url('editor-core://dashboard') );
-            Dashboard.open();
-        }
-    }
 };

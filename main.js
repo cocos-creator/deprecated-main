@@ -1,3 +1,11 @@
+global.Editor = {};
+global.Fire = {};
+
+
+// load user App definition
+Editor.App = require('./app.js');
+Editor.cwd = __dirname;
+
 // ---------------------------
 // load modules
 // ---------------------------
@@ -23,11 +31,11 @@ process.on('uncaughtException', function(error) {
 // initialize minimal Editor
 // ---------------------------
 
-global.Editor = {};
-global.Fire = {};
-
 Editor.name = App.getName();
-Editor.cwd = __dirname;
+
+// mainEntry = absolute path of ./app.js
+Editor.mainEntry = Path.join(Editor.cwd, 'app.js');
+
 // NOTE: Editor.dataPath = ~/.{app-name}/
 Editor.dataPath = Path.join( App.getPath('home'), '.' + Editor.name );
 
@@ -36,14 +44,11 @@ if ( !Fs.existsSync(Editor.dataPath) ) {
     Fs.makeTreeSync(Editor.dataPath);
 }
 
-// initialize ~/.fireball/settings/
+// initialize ~/.{app-name}/settings/
 var settingsPath = Path.join(Editor.dataPath, 'settings');
 if ( !Fs.existsSync(settingsPath) ) {
     Fs.mkdirSync(settingsPath);
 }
-
-// load user App definition
-Editor.App = require('./app.js');
 
 // ---------------------------
 // initialize logs/
@@ -199,6 +204,71 @@ Commander.parse(process.argv);
 Editor.isDev = Commander.dev;
 Editor.showDevtools = Commander.showDevtools;
 
+// ---------------------------
+// Define Editor.App APIs
+// ---------------------------
+
+var _editorAppIpc;
+function _loadEditorApp () {
+    var editorApp = Editor.App;
+
+    if ( editorApp.load ) {
+        try {
+            Editor.App.load();
+        }
+        catch (err) {
+            Editor.failed( 'Failed to load Editor.App, %s.', err.stack );
+            return;
+        }
+    }
+
+    // register ipcs
+    var ipcListener = new Editor.IpcListener();
+    for ( var prop in editorApp ) {
+        if ( prop.indexOf(':') === -1 )
+            continue;
+
+        if ( typeof editorApp[prop] === 'function' ) {
+            ipcListener.on( prop, editorApp[prop].bind(editorApp) );
+        }
+    }
+    _editorAppIpc = ipcListener;
+}
+
+function _unloadEditorApp () {
+    var editorApp = Editor.App;
+
+    // unregister main ipcs
+    _editorAppIpc.clear();
+    _editorAppIpc = null;
+
+    // unload main
+    var cache = require.cache;
+    if ( editorApp.unload ) {
+        try {
+            editorApp.unload();
+        }
+        catch (err) {
+            Editor.failed( 'Failed to unload Editor.App, %s.', err.stack );
+        }
+    }
+
+    delete cache[Editor.mainEntry];
+}
+
+function _reloadEditorApp () {
+    _unloadEditorApp();
+    Editor.App = require(Editor.mainEntry);
+    Editor.App.reload = _reloadEditorApp;
+    _loadEditorApp();
+
+    Editor.success('Editor.App reloaded');
+}
+
+// ---------------------------
+// register App events
+// ---------------------------
+
 // DISABLE: http cache only happends afterwhile, not satisefy our demand (which need to happend immediately).
 // App.commandLine.appendSwitch('disable-http-cache');
 // App.commandLine.appendSwitch('disable-direct-write');
@@ -248,6 +318,10 @@ App.on('ready', function() {
         App.terminate();
         return;
     }
+
+    // register user App Ipcs
+    _loadEditorApp();
+    Editor.App.reload = _reloadEditorApp;
 
     //
     Winston.success('Initial success!');
