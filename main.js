@@ -302,6 +302,10 @@ App.on('ready', function() {
     Editor.registerProfilePath( 'global', Path.join( Editor.dataPath, 'settings' ) );
     Editor.registerProfilePath( 'local', Path.join( Editor.dataPath, 'settings' ) );
 
+    // register package path
+    Editor.registerPackagePath( Path.join( Editor.cwd, 'builtin' ) );
+    Editor.registerPackagePath( Path.join( Editor.dataPath, 'extends' ) );
+
     // init user App
     if ( !Editor.App.init ) {
         Winston.error('Can not find function "init" in your App');
@@ -323,6 +327,10 @@ App.on('ready', function() {
 
     //
     Winston.success('Initial success!');
+
+    // before run the app, we start loading packages
+    Winston.normal('Loading packages');
+    Editor.loadPackages();
 
     // run user App
     if ( !Editor.App.run ) {

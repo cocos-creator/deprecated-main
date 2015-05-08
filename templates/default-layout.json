@@ -9,43 +9,48 @@
       "min-width": 200,
       "docks": [
         {
+          "active": 0,
           "type": "panel",
           "height": 300,
           "panels": [
-            "fire-hierarchy.default"
+            "fire-hierarchy.panel"
           ]
         },
         {
+          "active": 0,
           "type": "panel",
           "panels": [
-            "fire-assets.default"
+            "fire-assets.panel"
           ]
         }
       ]
     },
     {
+      "active": 0,
       "type": "panel",
       "width": 300,
       "min-width": 240,
       "panels": [
-        "fire-inspector.default"
+        "fire-inspector.panel"
       ]
     },
     {
       "type": "dock",
       "docks": [
         {
+          "active": 0,
           "type": "panel",
           "panels": [
-            "fire-scene.default",
-            "fire-game.default"
+            "fire-scene.panel",
+            "fire-game.panel"
           ]
         },
         {
+          "active": 0,
           "type": "panel",
           "height": 200,
           "panels": [
-            "fire-console.default"
+            "fire-console.panel"
           ]
         }
       ]

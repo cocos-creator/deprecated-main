@@ -1,13 +1,18 @@
 if ( Editor.argv.panelID ) {
     Editor.Panel.load( Editor.argv.panelID, function ( err, viewEL, panelInfo ) {
+        if ( err ) {
+            return;
+        }
+
         if ( panelInfo.type === 'dockable' ) {
             var dock = new FireDock();
-            dock.setAttribute('fit', '');
             dock.setAttribute('no-collapse', '');
+            dock.setAttribute('fit', '');
 
-            var panel = new FirePanel();
-            panel.add(viewEL);
-            dock.appendChild(panel);
+            var panelEL = new FirePanel();
+            panelEL.add(viewEL);
+
+            dock.appendChild(panelEL);
             document.body.appendChild(dock);
 
             EditorUI.DockUtils.root = dock;
@@ -22,10 +27,6 @@ if ( Editor.argv.panelID ) {
         Editor.sendToCore('panel:ready', Editor.argv.panelID);
 
         // save layout after css layouted
-        window.requestAnimationFrame ( function () {
-            Editor.sendToCore( 'window:save-layout',
-                              Editor.Panel.getLayout(),
-                              Editor.requireIpcEvent );
-        });
+        Editor.saveLayout();
     });
 }
