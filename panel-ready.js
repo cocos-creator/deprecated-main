@@ -1,5 +1,5 @@
 if ( Editor.argv.panelID ) {
-    Editor.Panel.load( Editor.argv.panelID, function ( err, viewEL, panelInfo ) {
+    Editor.Panel.load( Editor.argv.panelID, function ( err, frameEL, panelInfo ) {
         if ( err ) {
             return;
         }
@@ -10,7 +10,7 @@ if ( Editor.argv.panelID ) {
             dock.setAttribute('fit', '');
 
             var panelEL = new FirePanel();
-            panelEL.add(viewEL);
+            panelEL.add(frameEL);
 
             dock.appendChild(panelEL);
             document.body.appendChild(dock);
@@ -18,9 +18,9 @@ if ( Editor.argv.panelID ) {
             EditorUI.DockUtils.root = dock;
         }
         else {
-            document.body.appendChild(viewEL);
+            document.body.appendChild(frameEL);
 
-            EditorUI.DockUtils.root = viewEL;
+            EditorUI.DockUtils.root = frameEL;
         }
         EditorUI.DockUtils.reset();
 
