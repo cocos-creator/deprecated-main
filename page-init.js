@@ -60,7 +60,7 @@ try {
             Editor.sendToWindows('console:error', error.stack || error);
         }
         else {
-            console.error(message, error);
+            console.error(error);
         }
 
         // Just let default handler run.
