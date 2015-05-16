@@ -50,7 +50,8 @@
           "type": "panel",
           "height": 200,
           "panels": [
-            "fire-console.panel"
+            "fire-console.panel",
+            "fire-animation.panel"
           ]
         }
       ]
