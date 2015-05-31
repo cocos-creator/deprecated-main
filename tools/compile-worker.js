@@ -38,7 +38,9 @@ function nicifyError (error) {
         }
         return "";
     }
-    var msg = error.message;
+
+    var msg = error.toString().trim();
+    //var msg = error.message;
     if (msg) {
         var path = matchFormat(msg, "ENOENT, open '", ".js'");
         var module;
@@ -55,6 +57,9 @@ function nicifyError (error) {
         }
         else if (matchFormat(msg, "Cannot find module '", "'")) {
             return "'require': " + msg;
+        }
+        else if (Fire.JS.String.startsWith(msg, 'Error:')) {
+            return msg;
         }
         else {
             return "Compile error: " + msg;
@@ -399,7 +404,7 @@ Ipc.on('compile-worker:start', function (args) {
             .on('error', function (error) {
                 error = nicifyError(error);
                 if (gulp.isRunning) {
-                    gulp.stop(nicifyError(error));
+                    gulp.stop(error);
                 }
                 //result.emit('end');     // make this task really stopped in gulp
             })
