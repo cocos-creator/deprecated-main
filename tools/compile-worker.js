@@ -16,6 +16,8 @@ var buffer = require('vinyl-buffer');
 var sourcemaps = require('gulp-sourcemaps');
 var uglify = require('gulp-uglify');
 
+var COMPILED_LINE_OFFSET = -3;   // 扣除 pre compile 时加上的行数
+
 function compileEnd () {
     Editor.sendToCore('compile-worker:end');
 }
@@ -37,6 +39,17 @@ function nicifyError (error) {
             return str.substring(prefix.length, str.length - suffix.length);
         }
         return "";
+    }
+
+    // 计算编译前对应的代码行, 扣除 pre compile 时加上的行数
+    function formatCompiledLine (msg) {
+        var array = msg.split(':');
+        
+        var line  = parseInt(array[1]);
+        line += COMPILED_LINE_OFFSET;
+
+        msg = array[0] + ':' + line;
+        return msg;
     }
 
     var msg = error.toString().trim();
@@ -62,6 +75,7 @@ function nicifyError (error) {
             return msg;
         }
         else {
+            msg = formatCompiledLine(msg);
             return "Compile error: " + msg;
         }
     }
