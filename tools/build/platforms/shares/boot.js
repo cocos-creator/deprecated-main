@@ -19,6 +19,8 @@
         Fire.Screen.ContainerStrategy.EqualToFrame.apply();
 
         // init assets
+        //var urlSuffix = settings.resUuid ? '/' + settings.resUuid : '';
+        //Fire.AssetLibrary.init('resource' + urlSuffix + '/library');
         Fire.AssetLibrary.init('resource/library');
 
         // load scene

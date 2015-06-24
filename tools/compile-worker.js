@@ -182,6 +182,7 @@ Ipc.on('compile-worker:start', function (args) {
         });
     });
 
+    // exclude package scripts disabled in settings
     gulp.task('parseProjectPlugins', function () {
         bundleInfos.project.scriptGlobs = [];
         return gulp.src('assets/**/package.json.meta', { cwd: paths.proj })
